@@ -28,6 +28,32 @@
       }
     },
     {
+      "Sid": "AllowDevFrontendBucketAccess",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::christopher-corbin-portfolio-dev-20251006",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "us-east-1"
+        }
+      }
+    },
+    {
+      "Sid": "AllowDevFrontendObjectOperations",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::christopher-corbin-portfolio-dev-20251006/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "us-east-1"
+        }
+      }
+    },
+    {
       "Sid": "AllowSAMDeploymentBucketAccess",
       "Effect": "Allow",
       "Action": [
