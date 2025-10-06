@@ -64,6 +64,7 @@
         "cloudformation:DescribeStackEvents",
         "cloudformation:DescribeStackResources",
         "cloudformation:GetTemplate",
+        "cloudformation:GetTemplateSummary",
         "cloudformation:ValidateTemplate",
         "cloudformation:CreateChangeSet",
         "cloudformation:ExecuteChangeSet",
@@ -82,6 +83,19 @@
           "aws:RequestedRegion": "us-east-1"
         }
       }
+    },
+    {
+      "Sid": "AllowCloudFormationTransforms",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:CreateChangeSet",
+        "cloudformation:ExecuteChangeSet",
+        "cloudformation:DeleteChangeSet",
+        "cloudformation:DescribeChangeSet"
+      ],
+      "Resource": [
+        "arn:aws:cloudformation:us-east-1:aws:transform/Serverless-*"
+      ]
     },
     {
       "Sid": "AllowCloudFormationListOperations",

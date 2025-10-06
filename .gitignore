@@ -25,6 +25,7 @@ node_modules/
 # Build artifacts
 dist/
 build/
+.aws-sam/
 
 # Logs
 *.log
@@ -32,3 +33,14 @@ logs/
 
 # Backup files
 *-backup.*
+
+# Test and debug files
+test-*.html
+debug-*.html
+*-test.*
+
+# Deployment scripts and temporary configs
+cleanup.sh
+deploy.sh
+setup-*.sh
+bucket-policy*.json
