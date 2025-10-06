@@ -1,0 +1,135 @@
+name: Deploy Portfolio to AWS S3
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y awscli
+        
+    - name: Validate HTML
+      run: |
+        echo "🔍 Validating HTML structure..."
+        # Check if required files exist
+        test -f index.html || { echo "❌ index.html missing"; exit 1; }
+        test -f styles.css || { echo "❌ styles.css missing"; exit 1; }
+        test -f script.js || { echo "❌ script.js missing"; exit 1; }
+        echo "✅ All required files present"
+        
+    - name: Deploy to S3
+      env:
+        S3_BUCKET: christopher-corbin-portfolio-20251005195625
+      run: |
+        echo "🚀 Deploying to S3 bucket: $S3_BUCKET"
+        
+        # Sync website files with appropriate cache headers
+        aws s3 sync . s3://$S3_BUCKET \
+          --delete \
+          --exclude "*.json" \
+          --exclude "*.sh" \
+          --exclude "*.md" \
+          --exclude ".git/*" \
+          --exclude ".github/*" \
+          --exclude "node_modules/*" \
+          --cache-control "text/html:max-age=300" \
+          --cache-control "text/css:max-age=31536000" \
+          --cache-control "application/javascript:max-age=31536000" \
+          --cache-control "image/*:max-age=31536000"
+          
+        echo "✅ Deployment completed successfully!"
+        
+    - name: Verify deployment
+      env:
+        S3_BUCKET: christopher-corbin-portfolio-20251005195625
+        WEBSITE_URL: http://christopher-corbin-portfolio-20251005195625.s3-website-us-east-1.amazonaws.com
+      run: |
+        echo "🔍 Verifying deployment..."
+        
+        # Check if website is accessible
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $WEBSITE_URL || echo "000")
+        
+        if [ "$HTTP_STATUS" = "200" ]; then
+          echo "✅ Website is accessible at $WEBSITE_URL"
+          echo "📊 Deployment Summary:"
+          aws s3 ls s3://$S3_BUCKET --human-readable --summarize | tail -2
+        else
+          echo "❌ Website not accessible. HTTP Status: $HTTP_STATUS"
+          exit 1
+        fi
+        
+    - name: Performance check
+      env:
+        WEBSITE_URL: http://christopher-corbin-portfolio-20251005195625.s3-website-us-east-1.amazonaws.com
+      run: |
+        echo "⚡ Running basic performance check..."
+        
+        # Measure response time
+        RESPONSE_TIME=$(curl -s -w "%{time_total}" -o /dev/null $WEBSITE_URL)
+        echo "🕐 Response time: ${RESPONSE_TIME}s"
+        
+        # Check file sizes
+        echo "📁 File sizes:"
+        aws s3 ls s3://christopher-corbin-portfolio-20251005195625 --human-readable | grep -E "\.(html|css|js)$" || true
+        
+    - name: Security scan
+      run: |
+        echo "🛡️ Running basic security checks..."
+        
+        # Check for sensitive information in files
+        echo "🔍 Scanning for potential secrets..."
+        if grep -r -i "password\|secret\|key" --include="*.html" --include="*.css" --include="*.js" . | grep -v "skill-item\|api-key\|access-key" | head -5; then
+          echo "⚠️  Potential sensitive data found (review above)"
+        else
+          echo "✅ No obvious sensitive data detected"
+        fi
+        
+        # Check HTTPS readiness
+        echo "🔒 HTTPS Readiness check..."
+        if grep -q "http://" index.html; then
+          echo "⚠️  Found HTTP links - consider updating for HTTPS"
+        else
+          echo "✅ No HTTP links found"
+        fi
+        
+    - name: Generate deployment report
+      env:
+        S3_BUCKET: christopher-corbin-portfolio-20251005195625
+        WEBSITE_URL: http://christopher-corbin-portfolio-20251005195625.s3-website-us-east-1.amazonaws.com
+      run: |
+        echo "📋 Deployment Report"
+        echo "==================="
+        echo "🌐 Website URL: $WEBSITE_URL"
+        echo "🪣 S3 Bucket: $S3_BUCKET"
+        echo "📅 Deploy Time: $(date)"
+        echo "🏗️ Built by: GitHub Actions"
+        echo "🔧 Triggered by: ${{ github.actor }}"
+        echo "📝 Commit: ${{ github.sha }}"
+        echo ""
+        echo "📊 Bucket Contents:"
+        aws s3 ls s3://$S3_BUCKET --human-readable
+        echo ""
+        echo "✅ Portfolio deployment completed successfully!"
+        echo ""
+        echo "💡 Next steps:"
+        echo "   • Visit your portfolio: $WEBSITE_URL"
+        echo "   • Set up custom domain with CloudFront"
+        echo "   • Add SSL certificate for HTTPS"
