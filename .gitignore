@@ -44,3 +44,7 @@ cleanup.sh
 deploy.sh
 setup-*.sh
 bucket-policy*.json
+
+# Resume files (keep local only)
+*.pdf
+resume-pdf.html
