@@ -1,0 +1,79 @@
+name: Deploy SAM Application
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'template.yaml'
+      - 'src/**'
+      - 'samconfig.toml'
+  workflow_dispatch:
+
+jobs:
+  deploy-sam:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Setup AWS SAM CLI
+      uses: aws-actions/setup-sam@v2
+      with:
+        use-installer: true
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    - name: Build SAM application
+      run: sam build
+    
+    - name: Deploy SAM application
+      run: |
+        sam deploy \
+          --no-confirm-changeset \
+          --no-fail-on-empty-changeset \
+          --stack-name christopher-corbin-portfolio-backend \
+          --capabilities CAPABILITY_IAM \
+          --region us-east-1 \
+          --parameter-overrides \
+            ContactEmail=${{ secrets.CONTACT_EMAIL }} \
+            CorsOrigin=https://${{ secrets.CLOUDFRONT_DOMAIN }}
+    
+    - name: Get API Gateway URL
+      run: |
+        API_URL=$(aws cloudformation describe-stacks \
+          --stack-name christopher-corbin-portfolio-backend \
+          --region us-east-1 \
+          --query 'Stacks[0].Outputs[?OutputKey==`ContactApiUrl`].OutputValue' \
+          --output text)
+        echo "Contact API URL: $API_URL"
+        echo "API_URL=$API_URL" >> $GITHUB_ENV
+    
+    - name: Update environment file
+      run: |
+        echo "VITE_CONTACT_API_URL=$API_URL" > .env.production
+        echo "Environment file created with API URL"
+    
+    - name: Commit environment file
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .env.production
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update API URL in environment file [skip ci]"
+          git push
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

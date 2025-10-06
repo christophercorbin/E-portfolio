@@ -94,13 +94,29 @@ window.addEventListener('load', () => {
 // Contact form handling
 const contactForm = document.getElementById('contactForm');
 
+// Get configuration from config.js
+const getConfig = () => {
+    return window.PORTFOLIO_CONFIG || {
+        CONTACT_API_URL: 'https://9rau1nnkg3.execute-api.us-east-1.amazonaws.com/prod/contact',
+        CONTACT_FORM: {
+            MIN_MESSAGE_LENGTH: 10,
+            MAX_MESSAGE_LENGTH: 1000,
+            MAX_NAME_LENGTH: 100
+        },
+        FORM_SUBMIT_TIMEOUT: 30000,
+        ENABLE_ANALYTICS: true
+    };
+};
+
+const config = getConfig();
+
 contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const formData = new FormData(contactForm);
-    const name = formData.get('name');
-    const email = formData.get('email');
-    const message = formData.get('message');
+    const name = formData.get('name').trim();
+    const email = formData.get('email').trim();
+    const message = formData.get('message').trim();
     
     // Basic validation
     if (!name || !email || !message) {
@@ -113,20 +129,93 @@ contactForm.addEventListener('submit', async (e) => {
         return;
     }
     
-    // Simulate form submission (replace with actual backend integration)
+    if (name.length > config.CONTACT_FORM.MAX_NAME_LENGTH) {
+        showNotification(`Name must be less than ${config.CONTACT_FORM.MAX_NAME_LENGTH} characters.`, 'error');
+        return;
+    }
+    
+    if (message.length < config.CONTACT_FORM.MIN_MESSAGE_LENGTH) {
+        showNotification(`Message must be at least ${config.CONTACT_FORM.MIN_MESSAGE_LENGTH} characters long.`, 'error');
+        return;
+    }
+    
+    if (message.length > config.CONTACT_FORM.MAX_MESSAGE_LENGTH) {
+        showNotification(`Message must be less than ${config.CONTACT_FORM.MAX_MESSAGE_LENGTH} characters.`, 'error');
+        return;
+    }
+    
+    // Send form data to AWS API
     try {
+        // Disable form and show loading state
+        const submitButton = contactForm.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.textContent;
+        
+        submitButton.disabled = true;
+        submitButton.textContent = 'Sending...';
+        submitButton.classList.add('loading');
+        submitButton.style.cursor = 'not-allowed';
+        
+        // Disable all form inputs
+        const formInputs = contactForm.querySelectorAll('input, textarea');
+        formInputs.forEach(input => input.disabled = true);
+        
         showNotification('Sending message...', 'info');
         
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), config.FORM_SUBMIT_TIMEOUT);
         
-        // For demo purposes, we'll just show success message
-        // In a real application, you would send this to your backend or a service like AWS SES
-        showNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
-        contactForm.reset();
+        const response = await fetch(config.CONTACT_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                message: message
+            }),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        const result = await response.json();
+        
+        if (response.ok) {
+            showNotification(result.message || 'Message sent successfully! I\'ll get back to you soon.', 'success');
+            contactForm.reset();
+            
+            // Optional: Add Google Analytics event tracking
+            if (config.ENABLE_ANALYTICS && typeof gtag !== 'undefined') {
+                gtag('event', 'contact_form_submit', {
+                    'event_category': 'engagement',
+                    'event_label': 'contact_form'
+                });
+            }
+        } else {
+            // Handle API error responses
+            const errorMessage = result.error || 'Failed to send message. Please try again.';
+            showNotification(errorMessage, 'error');
+        }
         
     } catch (error) {
-        showNotification('Failed to send message. Please try again later.', 'error');
+        if (error.name === 'AbortError') {
+            showNotification('Request timed out. Please try again.', 'error');
+        } else {
+            console.error('Contact form error:', error);
+            showNotification('Network error. Please check your connection and try again.', 'error');
+        }
+    } finally {
+        // Re-enable form regardless of success or failure
+        const submitButton = contactForm.querySelector('button[type="submit"]');
+        const formInputs = contactForm.querySelectorAll('input, textarea');
+        
+        submitButton.disabled = false;
+        submitButton.textContent = originalButtonText;
+        submitButton.classList.remove('loading');
+        submitButton.style.cursor = 'pointer';
+        
+        formInputs.forEach(input => input.disabled = false);
     }
 });
 
