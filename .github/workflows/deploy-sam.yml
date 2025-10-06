@@ -37,6 +37,22 @@ jobs:
     - name: Build SAM application
       run: sam build
     
+    - name: Validate required secrets
+      run: |
+        if [[ -z "${{ secrets.CONTACT_EMAIL }}" ]]; then
+          echo "❌ Error: CONTACT_EMAIL secret is not set"
+          echo "Please add CONTACT_EMAIL to your GitHub repository secrets"
+          exit 1
+        fi
+        echo "✅ CONTACT_EMAIL secret is configured"
+        
+        # Set default CORS origin if not provided
+        CORS_ORIGIN="*"
+        if [[ -n "${{ secrets.CLOUDFRONT_DOMAIN }}" ]]; then
+          CORS_ORIGIN="https://${{ secrets.CLOUDFRONT_DOMAIN }}"
+        fi
+        echo "CORS_ORIGIN=$CORS_ORIGIN" >> $GITHUB_ENV
+    
     - name: Deploy SAM application
       run: |
         sam deploy \
@@ -46,34 +62,21 @@ jobs:
           --capabilities CAPABILITY_IAM \
           --region us-east-1 \
           --parameter-overrides \
-            ContactEmail=${{ secrets.CONTACT_EMAIL }} \
-            CorsOrigin=https://${{ secrets.CLOUDFRONT_DOMAIN }}
+            "ContactEmail=${{ secrets.CONTACT_EMAIL }}" \
+            "CorsOrigin=$CORS_ORIGIN"
     
-    - name: Get API Gateway URL
+    - name: Get and display API Gateway URL
       run: |
+        echo "⏳ Retrieving API Gateway URL..."
         API_URL=$(aws cloudformation describe-stacks \
           --stack-name christopher-corbin-portfolio-backend \
           --region us-east-1 \
           --query 'Stacks[0].Outputs[?OutputKey==`ContactApiUrl`].OutputValue' \
           --output text)
-        echo "Contact API URL: $API_URL"
-        echo "API_URL=$API_URL" >> $GITHUB_ENV
-    
-    - name: Update environment file
-      run: |
-        echo "VITE_CONTACT_API_URL=$API_URL" > .env.production
-        echo "Environment file created with API URL"
-    
-    - name: Commit environment file
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add .env.production
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
+        
+        if [[ -n "$API_URL" && "$API_URL" != "None" ]]; then
+          echo "✅ Contact API URL: $API_URL"
+          echo "🚀 Your contact form backend is now live!"
         else
-          git commit -m "Update API URL in environment file [skip ci]"
-          git push
+          echo "⚠️ Warning: Could not retrieve API URL"
         fi
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
