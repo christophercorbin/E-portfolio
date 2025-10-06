@@ -49,6 +49,7 @@ jobs:
           --exclude "*.json" \
           --exclude "*.sh" \
           --exclude "*.md" \
+          --exclude ".DS_Store" \
           --exclude ".git/*" \
           --exclude ".github/*" \
           --exclude "node_modules/*" \

@@ -9,9 +9,6 @@
       "Condition": {
         "StringEquals": {
           "aws:RequestedRegion": "us-east-1"
-        },
-        "DateGreaterThan": {
-          "aws:CurrentTime": "2024-01-01T00:00:00Z"
         }
       }
     },
@@ -27,14 +24,6 @@
       "Condition": {
         "StringEquals": {
           "aws:RequestedRegion": "us-east-1"
-        },
-        "StringLike": {
-          "s3:x-amz-content-type": [
-            "text/html*",
-            "text/css*",
-            "application/javascript*",
-            "image/*"
-          ]
         }
       }
     },
@@ -54,22 +43,6 @@
         "arn:aws:s3:::christopher-corbin-portfolio-20251005195625",
         "arn:aws:s3:::christopher-corbin-portfolio-20251005195625/*"
       ]
-    },
-    {
-      "Sid": "RestrictToGitHubActionsOnly",
-      "Effect": "Deny",
-      "NotAction": [
-        "s3:ListBucket",
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringNotEquals": {
-          "aws:userid": "${aws:username}"
-        }
-      }
     }
   ]
 }

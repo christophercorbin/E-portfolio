@@ -27,8 +27,9 @@ aws s3 sync . s3://$BUCKET_NAME \
     --exclude "*.json" \
     --exclude "*.sh" \
     --exclude ".DS_Store" \
-    --exclude "README.md" \
+    --exclude "*.md" \
     --exclude ".git/*" \
+    --exclude ".github/*" \
     --cache-control "text/html:max-age=0,no-cache" \
     --cache-control "text/css:max-age=31536000" \
     --cache-control "application/javascript:max-age=31536000"
