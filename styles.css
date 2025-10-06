@@ -243,8 +243,22 @@ body {
 .profile-card::after,
 .profile-card .overlay,
 .profile-card .controls,
-.profile-card .button {
+.profile-card .button,
+.profile-card [class*="control"],
+.profile-card [class*="overlay"],
+.profile-card [class*="debug"] {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Prevent any text or content from appearing over the image */
+.profile-card * {
+    pointer-events: none;
+}
+
+.profile-photo {
+    pointer-events: auto;
 }
 
 .profile-photo {
