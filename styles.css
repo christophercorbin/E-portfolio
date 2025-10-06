@@ -235,6 +235,16 @@ body {
     animation: float 3s ease-in-out infinite;
     overflow: hidden;
     border: 6px solid white;
+    position: relative;
+}
+
+/* Remove any potential overlay elements or pseudo-elements */
+.profile-card::before,
+.profile-card::after,
+.profile-card .overlay,
+.profile-card .controls,
+.profile-card .button {
+    display: none !important;
 }
 
 .profile-photo {
@@ -243,6 +253,8 @@ body {
     object-fit: cover;
     border-radius: 50%;
     transition: var(--transition);
+    position: relative;
+    z-index: 1;
 }
 
 .profile-photo:hover {
