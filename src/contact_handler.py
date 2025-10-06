@@ -24,11 +24,12 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Processes form data, stores in DynamoDB, and sends email via SES.
     """
     
-    # CORS headers
+    # CORS headers - More permissive for local development
     cors_headers = {
-        'Access-Control-Allow-Origin': CORS_ORIGIN,
+        'Access-Control-Allow-Origin': '*',  # Allow all origins for now
         'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-        'Access-Control-Allow-Methods': 'POST,OPTIONS'
+        'Access-Control-Allow-Methods': 'POST,OPTIONS',
+        'Access-Control-Allow-Credentials': 'false'
     }
     
     try:

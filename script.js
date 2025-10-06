@@ -153,10 +153,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Send form data to AWS API
+    const submitButton = contactForm.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.textContent;
+    
     try {
         // Disable form and show loading state
-        const submitButton = contactForm.querySelector('button[type="submit"]');
-        const originalButtonText = submitButton.textContent;
         
         submitButton.disabled = true;
         submitButton.textContent = 'Sending...';
