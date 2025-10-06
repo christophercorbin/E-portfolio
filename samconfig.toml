@@ -6,7 +6,6 @@ version = 0.1
 [default.deploy]
 [default.deploy.parameters]
 stack_name = "christopher-corbin-portfolio-backend"
-s3_bucket = ""  # SAM will create a deployment bucket automatically
 s3_prefix = "christopher-corbin-portfolio-backend"
 region = "us-east-1"
 capabilities = "CAPABILITY_IAM"

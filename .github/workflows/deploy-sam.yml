@@ -80,17 +80,32 @@ jobs:
     
     - name: Deploy SAM application
       run: |
-        sam deploy \
-          --config-env $ENVIRONMENT \
-          --no-confirm-changeset \
-          --no-fail-on-empty-changeset \
-          --stack-name $STACK_NAME \
-          --capabilities CAPABILITY_IAM \
-          --region us-east-1 \
-          --parameter-overrides \
-            "ContactEmail=${{ secrets.CONTACT_EMAIL }}" \
-            "CorsOrigin=$CORS_ORIGIN" \
-            "Environment=$ENVIRONMENT"
+        if [ "$ENVIRONMENT" = "dev" ]; then
+          # Use dev-specific configuration
+          sam deploy \
+            --config-file samconfig-dev.toml \
+            --config-env dev \
+            --resolve-s3 \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              "ContactEmail=${{ secrets.CONTACT_EMAIL }}" \
+              "CorsOrigin=$CORS_ORIGIN" \
+              "Environment=$ENVIRONMENT"
+        else
+          # Use default configuration for production
+          sam deploy \
+            --resolve-s3 \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --stack-name $STACK_NAME \
+            --capabilities CAPABILITY_IAM \
+            --region us-east-1 \
+            --parameter-overrides \
+              "ContactEmail=${{ secrets.CONTACT_EMAIL }}" \
+              "CorsOrigin=$CORS_ORIGIN" \
+              "Environment=$ENVIRONMENT"
+        fi
     
     - name: Get and test API Gateway URL
       run: |
