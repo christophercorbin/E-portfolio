@@ -91,9 +91,6 @@ window.addEventListener('load', () => {
     }
 });
 
-// Contact form handling
-const contactForm = document.getElementById('contactForm');
-
 // Get configuration from config.js
 const getConfig = () => {
     return window.PORTFOLIO_CONFIG || {
@@ -108,9 +105,20 @@ const getConfig = () => {
     };
 };
 
-const config = getConfig();
+// Contact form handling - Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', () => {
+    const contactForm = document.getElementById('contactForm');
+    
+    // Check if contact form exists on this page
+    if (!contactForm) {
+        console.log('Contact form not found on this page');
+        return;
+    }
+    
+    const config = getConfig();
+    console.log('Contact form initialized with API URL:', config.CONTACT_API_URL);
 
-contactForm.addEventListener('submit', async (e) => {
+    contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const formData = new FormData(contactForm);
@@ -217,6 +225,7 @@ contactForm.addEventListener('submit', async (e) => {
         
         formInputs.forEach(input => input.disabled = false);
     }
+    });
 });
 
 // Email validation function
