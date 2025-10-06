@@ -74,6 +74,7 @@
       ],
       "Resource": [
         "arn:aws:cloudformation:us-east-1:*:stack/christopher-corbin-portfolio-backend/*",
+        "arn:aws:cloudformation:us-east-1:*:stack/christopher-corbin-portfolio-backend-dev/*",
         "arn:aws:cloudformation:us-east-1:*:stack/aws-sam-cli-managed-default/*"
       ],
       "Condition": {
