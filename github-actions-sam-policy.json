@@ -84,6 +84,20 @@
       }
     },
     {
+      "Sid": "AllowCloudFormationListOperations",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:ListStacks",
+        "cloudformation:DescribeStacks"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "us-east-1"
+        }
+      }
+    },
+    {
       "Sid": "AllowLambdaForSAM",
       "Effect": "Allow",
       "Action": [
