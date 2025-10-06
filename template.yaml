@@ -5,8 +5,21 @@ Description: 'Serverless Contact Form for Christopher Corbin Portfolio'
 Parameters:
   ContactEmail:
     Type: String
-    Default: 'Christophercorbin@gmail.com'
+    Default: 'christophercorbin24@gmail.com'
     Description: 'Email address to receive contact form submissions'
+  
+  CorsOrigin:
+    Type: String
+    Description: CORS origin for API Gateway
+    Default: "*"
+  
+  Environment:
+    Type: String
+    Description: Environment name (dev, prod)
+    Default: prod
+    AllowedValues:
+      - dev
+      - prod
 
 Globals:
   Function:
@@ -15,7 +28,7 @@ Globals:
     Environment:
       Variables:
         CONTACT_EMAIL: !Ref ContactEmail
-        CORS_ORIGIN: 'http://christopher-corbin-portfolio-20251005195625.s3-website-us-east-1.amazonaws.com'
+        CORS_ORIGIN: !Ref CorsOrigin
 
 Resources:
   # Lambda function to process contact form submissions
@@ -51,7 +64,7 @@ Resources:
       Cors:
         AllowMethods: "'POST, OPTIONS'"
         AllowHeaders: "'Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token'"
-        AllowOrigin: "'http://christopher-corbin-portfolio-20251005195625.s3-website-us-east-1.amazonaws.com'"
+        AllowOrigin: !Sub "'${CorsOrigin}'"
         AllowCredentials: false
       DefinitionBody:
         openapi: '3.0.1'
@@ -124,7 +137,7 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
                       method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Origin: "'http://christopher-corbin-portfolio-20251005195625.s3-website-us-east-1.amazonaws.com'"
+                      method.response.header.Access-Control-Allow-Origin: !Sub "'${CorsOrigin}'"
 
   # DynamoDB table to store contact form submissions
   ContactSubmissionsTable:

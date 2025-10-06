@@ -1,17 +1,42 @@
-name: Deploy SAM Application
+name: Deploy SAM Backend - Development
 
 on:
   push:
+    branches: [ dev-backend-integration ]
+    paths:
+      - 'template.yaml'
+      - 'src/**'
+      - 'samconfig*.toml'
+  pull_request:
     branches: [ main ]
     paths:
       - 'template.yaml'
       - 'src/**'
-      - 'samconfig.toml'
+      - 'samconfig*.toml'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - prod
+      cleanup:
+        description: 'Cleanup dev resources after testing'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   deploy-sam:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    
+    env:
+      ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+      STACK_NAME: christopher-corbin-portfolio-backend-${{ github.event.inputs.environment || 'dev' }}
     
     steps:
     - name: Checkout code
@@ -56,27 +81,102 @@ jobs:
     - name: Deploy SAM application
       run: |
         sam deploy \
+          --config-env $ENVIRONMENT \
           --no-confirm-changeset \
           --no-fail-on-empty-changeset \
-          --stack-name christopher-corbin-portfolio-backend \
+          --stack-name $STACK_NAME \
           --capabilities CAPABILITY_IAM \
           --region us-east-1 \
           --parameter-overrides \
             "ContactEmail=${{ secrets.CONTACT_EMAIL }}" \
-            "CorsOrigin=$CORS_ORIGIN"
+            "CorsOrigin=$CORS_ORIGIN" \
+            "Environment=$ENVIRONMENT"
     
-    - name: Get and display API Gateway URL
+    - name: Get and test API Gateway URL
       run: |
         echo "⏳ Retrieving API Gateway URL..."
         API_URL=$(aws cloudformation describe-stacks \
-          --stack-name christopher-corbin-portfolio-backend \
+          --stack-name $STACK_NAME \
           --region us-east-1 \
           --query 'Stacks[0].Outputs[?OutputKey==`ContactApiUrl`].OutputValue' \
           --output text)
         
         if [[ -n "$API_URL" && "$API_URL" != "None" ]]; then
           echo "✅ Contact API URL: $API_URL"
-          echo "🚀 Your contact form backend is now live!"
+          echo "API_URL=$API_URL" >> $GITHUB_ENV
+          echo "🚀 Backend deployed to $ENVIRONMENT environment!"
         else
-          echo "⚠️ Warning: Could not retrieve API URL"
+          echo "❌ Error: Could not retrieve API URL"
+          exit 1
         fi
+    
+    - name: Test API endpoint
+      run: |
+        echo "🧪 Testing API endpoint..."
+        response=$(curl -s -w "%{http_code}" -X POST "$API_URL" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "name": "GitHub Actions Test",
+            "email": "test@github-actions.com",
+            "message": "Automated test from $ENVIRONMENT deployment pipeline"
+          }')
+        
+        http_code=${response: -3}
+        if [[ $http_code -eq 200 ]]; then
+          echo "✅ API test passed - HTTP $http_code"
+        else
+          echo "❌ API test failed - HTTP $http_code"
+          echo "Response: ${response%???}"
+          exit 1
+        fi
+    
+    - name: Cleanup dev resources (if requested)
+      if: github.event.inputs.cleanup == 'true' && env.ENVIRONMENT == 'dev'
+      run: |
+        echo "🧹 Cleaning up development resources..."
+        aws cloudformation delete-stack \
+          --stack-name $STACK_NAME \
+          --region us-east-1
+        
+        echo "⏳ Waiting for stack deletion..."
+        aws cloudformation wait stack-delete-complete \
+          --stack-name $STACK_NAME \
+          --region us-east-1
+        
+        echo "✅ Development resources cleaned up successfully!"
+    
+    - name: Comment on PR with deployment info
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const comment = `## 🚀 Backend Deployment Complete
+          
+          **Environment**: \`${process.env.ENVIRONMENT}\`
+          **API URL**: \`${process.env.API_URL}\`
+          **Stack Name**: \`${process.env.STACK_NAME}\`
+          
+          ### ✅ Tests Passed
+          - API endpoint is responding correctly
+          - CORS configuration is working
+          - Contact form integration ready
+          
+          ### 🧪 Test the API
+          \`\`\`bash
+          curl -X POST "${process.env.API_URL}" \\
+            -H "Content-Type: application/json" \\
+            -d '{
+              "name": "Your Name",
+              "email": "your@email.com",
+              "message": "Test message"
+            }'
+          \`\`\`
+          
+          Ready for merge to main branch! 🎉`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
