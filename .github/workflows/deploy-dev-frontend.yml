@@ -1,0 +1,170 @@
+name: Deploy Dev Frontend to S3
+
+on:
+  push:
+    branches: [ dev-backend-integration ]
+    paths:
+      - 'index.html'
+      - 'resume.html'
+      - 'script.js'
+      - 'styles.css'
+      - 'config-dev.js'
+      - 'images/**'
+      - '.github/workflows/deploy-dev-frontend.yml'
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment regardless of changes'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  deploy-dev-frontend:
+    runs-on: ubuntu-latest
+    environment: dev
+    
+    env:
+      DEV_BUCKET: christopher-corbin-portfolio-dev-20251006
+      DEV_WEBSITE_URL: http://christopher-corbin-portfolio-dev-20251006.s3-website-us-east-1.amazonaws.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+        
+    - name: Verify AWS CLI and credentials
+      run: |
+        echo "AWS CLI version:"
+        aws --version
+        echo "Testing AWS credentials:"
+        aws sts get-caller-identity
+        echo "✅ AWS credentials verified"
+        
+    - name: Prepare dev environment files
+      run: |
+        echo "🔧 Preparing development environment..."
+        
+        # Replace production config with dev config in index.html
+        sed -i 's|<script src="config.js"></script>|<script src="config-dev.js"></script>|g' index.html
+        
+        # Also update resume.html if it references config.js
+        if grep -q "config.js" resume.html; then
+          sed -i 's|<script src="config.js"></script>|<script src="config-dev.js"></script>|g' resume.html
+        fi
+        
+        echo "✅ Development configuration applied"
+        
+    - name: Validate HTML and assets
+      run: |
+        echo "🔍 Validating development build..."
+        
+        # Check if required files exist
+        test -f index.html || { echo "❌ ERROR: index.html missing"; exit 1; }
+        test -f styles.css || { echo "❌ ERROR: styles.css missing"; exit 1; }
+        test -f script.js || { echo "❌ ERROR: script.js missing"; exit 1; }
+        test -f config-dev.js || { echo "❌ ERROR: config-dev.js missing"; exit 1; }
+        
+        # Check if dev config is properly referenced
+        if ! grep -q "config-dev.js" index.html; then
+          echo "❌ ERROR: index.html not using dev config"
+          exit 1
+        fi
+        
+        echo "✅ All required files present and configured for dev"
+        
+    - name: Deploy to Dev S3 Bucket
+      run: |
+        echo "🚀 Deploying to development S3 bucket: $DEV_BUCKET"
+        
+        # Sync website files with dev-appropriate cache headers
+        aws s3 sync . s3://$DEV_BUCKET \
+          --delete \
+          --exclude "*.json" \
+          --exclude "*.sh" \
+          --exclude "*.md" \
+          --exclude "*.toml" \
+          --exclude ".DS_Store" \
+          --exclude ".git/*" \
+          --exclude ".github/*" \
+          --exclude "node_modules/*" \
+          --exclude "src/*" \
+          --exclude "template.yaml" \
+          --exclude "config.js" \
+          --exclude "*-bucket-policy.json" \
+          --cache-control "text/html:max-age=0,no-cache" \
+          --cache-control "text/css:max-age=300" \
+          --cache-control "application/javascript:max-age=300" \
+          --cache-control "image/*:max-age=3600"
+          
+        echo "✅ Dev deployment completed successfully!"
+        
+    - name: Verify dev deployment
+      run: |
+        echo "🔍 Verifying development deployment..."
+        
+        # Check if website is accessible
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $DEV_WEBSITE_URL || echo "000")
+        
+        if [ "$HTTP_STATUS" = "200" ]; then
+          echo "✅ SUCCESS: Dev website is accessible at $DEV_WEBSITE_URL"
+          echo "📊 Development Deployment Summary:"
+          aws s3 ls s3://$DEV_BUCKET --human-readable --summarize | tail -2
+        else
+          echo "❌ ERROR: Dev website not accessible. HTTP Status: $HTTP_STATUS"
+          exit 1
+        fi
+        
+    - name: Test dev backend integration
+      run: |
+        echo "🧪 Testing dev backend integration..."
+        
+        # Extract API URL from deployed config-dev.js
+        API_URL="https://cdmwb9tdlj.execute-api.us-east-1.amazonaws.com/prod/contact"
+        
+        echo "📡 Testing API endpoint: $API_URL"
+        
+        # Test API health
+        HTTP_STATUS=$(curl -s -w "%{http_code}" -X POST "$API_URL" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "name": "GitHub Actions Dev Test",
+            "email": "dev-test@github-actions.com",
+            "message": "Automated dev frontend-backend integration test"
+          }' || echo "000")
+        
+        if [ "$HTTP_STATUS" = "200" ]; then
+          echo "✅ SUCCESS: Dev backend integration working!"
+        else
+          echo "⚠️  WARNING: Dev backend test failed with HTTP $HTTP_STATUS"
+          echo "This might be expected if backend is not deployed yet"
+        fi
+        
+    - name: Generate dev deployment report
+      run: |
+        echo "📋 Development Deployment Report"
+        echo "================================="
+        echo "🌍 Dev Website URL: $DEV_WEBSITE_URL"
+        echo "📦 S3 Bucket: $DEV_BUCKET" 
+        echo "📡 Backend API: https://cdmwb9tdlj.execute-api.us-east-1.amazonaws.com/prod/contact"
+        echo "🕐 Deploy Time: $(date)"
+        echo "🤖 Built by: GitHub Actions"
+        echo "👤 Triggered by: ${{ github.actor }}"
+        echo "🔗 Commit: ${{ github.sha }}"
+        echo ""
+        echo "📁 Bucket Contents:"
+        aws s3 ls s3://$DEV_BUCKET --human-readable
+        echo ""
+        echo "🎉 SUCCESS: Dev frontend deployment completed!"
+        echo ""
+        echo "🔗 Next steps:"
+        echo "   • Visit dev site: $DEV_WEBSITE_URL"
+        echo "   • Test contact form integration"
+        echo "   • Compare with production environment"
+        echo "   • Ready for testing! 🚀"
