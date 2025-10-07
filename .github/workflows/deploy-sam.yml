@@ -1,5 +1,10 @@
 name: Deploy SAM Backend - Development
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 on:
   push:
     branches: [ dev-backend-integration ]
