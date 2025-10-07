@@ -1,0 +1,6 @@
+# CloudFront Distribution Info
+Distribution ID: E34Q2E7TZIYZAB
+CloudFront Domain: d30iyriy15xq9k.cloudfront.net
+Custom Domain: christophercorbin.cloud
+SSL Certificate: arn:aws:acm:us-east-1:438465156498:certificate/eb2556c3-75c4-45ca-a27f-113ccadf4f01
+Created: Mon Oct  6 20:59:05 AST 2025

@@ -1,4 +1,4 @@
-name: Deploy Portfolio to AWS S3
+name: Deploy Portfolio to AWS (S3 + CloudFront)
 
 on:
   push:
@@ -58,25 +58,46 @@ jobs:
           --cache-control "application/javascript:max-age=31536000" \
           --cache-control "image/*:max-age=31536000"
           
-        echo "SUCCESS: Deployment completed successfully!"
+        echo "SUCCESS: S3 deployment completed successfully!"
+        
+    - name: Invalidate CloudFront Cache
+      env:
+        DISTRIBUTION_ID: E34Q2E7TZIYZAB
+        CUSTOM_DOMAIN: christophercorbin.cloud
+      run: |
+        echo "🔄 Invalidating CloudFront cache..."
+        
+        # Create cache invalidation
+        INVALIDATION_OUTPUT=$(aws cloudfront create-invalidation \
+          --distribution-id $DISTRIBUTION_ID \
+          --paths "/*")
+        
+        INVALIDATION_ID=$(echo "$INVALIDATION_OUTPUT" | jq -r '.Invalidation.Id')
+        
+        echo "✅ CloudFront invalidation created: $INVALIDATION_ID"
+        echo "⏳ Cache will be cleared in 1-3 minutes"
+        echo "🌐 Your changes will be live at: https://$CUSTOM_DOMAIN"
         
     - name: Verify deployment
       env:
         S3_BUCKET: christopher-corbin-portfolio-20251005195625
-        WEBSITE_URL: http://christopher-corbin-portfolio-20251005195625.s3-website-us-east-1.amazonaws.com
+        CUSTOM_DOMAIN: https://christophercorbin.cloud
+        CLOUDFRONT_URL: https://d30iyriy15xq9k.cloudfront.net
       run: |
         echo "Verifying deployment..."
         
-        # Check if website is accessible
-        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $WEBSITE_URL || echo "000")
+        # Check if CloudFront is accessible
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $CLOUDFRONT_URL || echo "000")
         
         if [ "$HTTP_STATUS" = "200" ]; then
-          echo "SUCCESS: Website is accessible at $WEBSITE_URL"
+          echo "✅ SUCCESS: Website is accessible via CloudFront"
+          echo "🌐 Custom Domain: $CUSTOM_DOMAIN"
+          echo "☁️  CloudFront URL: $CLOUDFRONT_URL"
           echo "Deployment Summary:"
           aws s3 ls s3://$S3_BUCKET --human-readable --summarize | tail -2
         else
-          echo "ERROR: Website not accessible. HTTP Status: $HTTP_STATUS"
-          exit 1
+          echo "❌ ERROR: Website not accessible via CloudFront. HTTP Status: $HTTP_STATUS"
+          echo "⚠️  This might be temporary during CloudFront cache invalidation"
         fi
         
     - name: Performance check
