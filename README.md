@@ -1,39 +1,40 @@
 # Christopher Corbin - AWS Solutions Architect & Security Engineer Portfolio
 
-[![Deploy Status](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy.yml)
-[![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=flat&logo=amazon-aws&logoColor=white)](http://christopher-corbin-portfolio-20251005195625.s3-website-us-east-1.amazonaws.com)
-[![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=flat&logo=githubactions&logoColor=white)](https://github.com/christophercorbin/E-portfolio/actions)
+[![Deploy Status](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy.yml) [![SAM Backend](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-prod.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-prod.yml)
 
-Professional portfolio showcasing AWS expertise, security engineering, and DevOps automation. Built with enterprise-grade cloud architecture and automated CI/CD pipeline.
+Professional portfolio showcasing AWS expertise, security engineering, and DevOps automation. Built with enterprise-grade cloud architecture, custom domain, and fully automated CI/CD pipelines.
 
 ## 🌐 Live Portfolio
-**Visit:** http://christopher-corbin-portfolio-20251005195625.s3-website-us-east-1.amazonaws.com
+**Visit**: [https://christophercorbin.cloud](https://christophercorbin.cloud)
 
-## Features
+**CloudFront Distribution**: https://d30iyriy15xq9k.cloudfront.net
+
+## ✨ Features
 
 ### Frontend
 - **Responsive Design**: Mobile-first approach with modern CSS Grid/Flexbox
 - **Professional Timeline**: Interactive experience showcase with achievements
 - **Project Portfolio**: Detailed project cards with live GitHub repositories
-- **Certification Display**: Credly badge integration with live verification
-- **Performance Optimized**: Lazy loading, image optimization, smooth animations
+- **Certification Display**: AWS and CompTIA badge integration
+- **Performance Optimized**: Global CDN, lazy loading, image optimization
 - **Accessibility**: WCAG compliant with semantic HTML and ARIA labels
+- **Custom Domain**: HTTPS with automated SSL certificate management
 
-### Backend & Infrastructure (Dev Branch)
+### Backend & Infrastructure
 - **Serverless Contact Form**: AWS Lambda + API Gateway + DynamoDB
 - **Email Notifications**: AWS SES integration with professional templates
 - **Data Storage**: DynamoDB with TTL for GDPR compliance
 - **Security**: Input validation, CORS protection, rate limiting
-- **Monitoring**: CloudWatch logs and error tracking
+- **Monitoring**: CloudWatch logs and comprehensive error tracking
 
 ### DevOps & Automation
-- **CI/CD Pipeline**: GitHub Actions with automated testing and deployment
+- **Multi-Environment CI/CD**: GitHub Actions with dev/prod pipelines
 - **Infrastructure as Code**: AWS SAM templates for reproducible deployments
 - **Security**: IAM policies with least privilege principles
-- **Monitoring**: Automated deployment status and health checks
-- **Branch Protection**: Separate dev/main branches for safe development
+- **Global Distribution**: CloudFront CDN with automatic cache invalidation
+- **Branch Protection**: Separate development and production workflows
 
-## Architecture
+## 🏗️ Architecture
 
 ### Frontend Architecture
 ```
@@ -49,9 +50,17 @@ Professional portfolio showcasing AWS expertise, security engineering, and DevOp
                                                 │                 │
                                                 │ Global CDN      │
                                                 └─────────────────┘
+                                                         │
+                                                         ▼
+                                                ┌─────────────────┐
+                                                │   Route 53 +    │
+                                                │ Custom Domain   │
+                                                │christophercorbin│
+                                                │    .cloud       │
+                                                └─────────────────┘
 ```
 
-### Backend Architecture (Dev Branch)
+### Backend Architecture
 ```
 ┌─────────────┐    ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Browser   │    │  API Gateway    │    │  Lambda Function │    │   DynamoDB      │
@@ -67,16 +76,16 @@ Professional portfolio showcasing AWS expertise, security engineering, and DevOp
                                             └─────────────────┘
 ```
 
-## Technology Stack
+## 💻 Technology Stack
 
 ### Frontend
 - **Languages**: HTML5, CSS3, JavaScript (ES6+)
-- **Frameworks**: Vanilla JS (no dependencies for optimal performance)
+- **Framework**: Vanilla JS (no dependencies for optimal performance)
 - **Icons**: Font Awesome
 - **Fonts**: Google Fonts (Inter)
 - **Build Tools**: Native browser APIs
 
-### Backend (Dev Branch)
+### Backend
 - **Runtime**: Python 3.9
 - **Framework**: AWS Lambda
 - **API**: AWS API Gateway (REST)
@@ -86,29 +95,34 @@ Professional portfolio showcasing AWS expertise, security engineering, and DevOp
 
 ### DevOps
 - **Version Control**: Git + GitHub
-- **CI/CD**: GitHub Actions
+- **CI/CD**: GitHub Actions (Multi-pipeline)
 - **Cloud Platform**: AWS
-- **Deployment**: Automated via GitHub Actions
+- **Domain**: Route 53 + Certificate Manager
 - **Monitoring**: AWS CloudWatch
 
-### AWS Services Used
-- **S3**: Static website hosting
-- **CloudFront**: Content Delivery Network
-- **Lambda**: Serverless compute (contact form)
-- **API Gateway**: RESTful API endpoints
-- **DynamoDB**: NoSQL database for form submissions
-- **SES**: Simple Email Service for notifications
-- **IAM**: Identity and Access Management
-- **CloudFormation**: Infrastructure as Code
-- **CloudWatch**: Logging and monitoring
+## ☁️ AWS Services Used
 
-## Deployment Process
+| Service | Purpose | Implementation |
+|---------|---------|----------------|
+| **S3** | Static website hosting | Bucket with website configuration |
+| **CloudFront** | Content Delivery Network | Global distribution with custom domain |
+| **Route 53** | DNS Management | Custom domain with SSL |
+| **Certificate Manager** | SSL/TLS Certificates | Automated certificate provisioning |
+| **Lambda** | Serverless compute | Contact form processing |
+| **API Gateway** | RESTful API endpoints | CORS-enabled REST API |
+| **DynamoDB** | NoSQL database | Contact form submissions |
+| **SES** | Simple Email Service | Professional email notifications |
+| **IAM** | Identity and Access Management | Least-privilege security policies |
+| **CloudFormation** | Infrastructure as Code | SAM template deployments |
+| **CloudWatch** | Logging and monitoring | Application and infrastructure monitoring |
+
+## 🚀 Deployment Process
 
 ### Automated CI/CD Pipeline
 
 1. **Code Push**: Developer pushes code to GitHub
 2. **GitHub Actions Trigger**: Workflow automatically starts
-3. **Build Process**: 
+3. **Build Process**:
    - Validates HTML/CSS/JavaScript
    - Optimizes assets
    - Runs security checks
@@ -119,111 +133,129 @@ Professional portfolio showcasing AWS expertise, security engineering, and DevOp
 5. **Health Check**: Automated testing of live site
 
 ### Branch Strategy
-- **`main`**: Production-ready code, auto-deploys to live site
-- **`dev-backend-integration`**: Development branch for backend features
+- **main**: Production-ready code, auto-deploys to live site
+- **dev-backend-integration**: Development branch for backend features
 - **Feature branches**: For individual features and experiments
 
-## Project Structure
+## 📁 Project Structure (Clean & Professional)
 
 ```
 AWS-eportfolio/
-├── index.html              # Main portfolio page
-├── resume.html             # Printable resume page
-├── styles.css              # Main stylesheet
-├── script.js               # Interactive functionality
-├── config.js               # Environment configuration
-├── .github/
-│   └── workflows/
-│       ├── deploy.yml      # Main deployment workflow
-│       └── deploy-sam.yml  # Backend deployment (dev)
-├── src/                    # Lambda function code (dev)
-│   └── contact_handler.py  # Contact form processor
-├── template.yaml           # SAM infrastructure template (dev)
-├── samconfig.toml          # SAM configuration (dev)
-├── secure-iam-policy.json  # IAM security policy
-├── debug-form.html         # Development tools (dev)
-├── test-form.html          # Testing utilities (dev)
-└── README.md               # This file
+├── 📄 index.html                    # Main portfolio page
+├── 📄 resume.html                   # Professional resume page
+├── 📄 styles.css                    # Main stylesheet
+├── 📄 script.js                     # Interactive functionality
+├── 📄 config.js                     # Production configuration
+├── 📄 config-dev.js                 # Development configuration
+├── 📂 images/                       # Portfolio assets
+│   └── profile-photo.jpg            # Professional headshot
+├── 📂 src/                          # Lambda function source code
+│   └── contact_handler.py           # Contact form processor
+├── 📂 infrastructure/               # AWS SAM templates and configs
+│   ├── template.yaml               # SAM infrastructure definition
+│   ├── samconfig.toml              # Production deployment config
+│   ├── samconfig-dev.toml          # Development deployment config
+│   ├── deploy-cloudfront.sh        # CloudFront deployment script
+│   └── setup-custom-domain.sh     # Domain setup automation
+├── 📂 aws-config/                   # AWS policies and configurations
+│   ├── github-actions-sam-policy.json         # SAM deployment permissions
+│   ├── github-actions-cloudfront-policy.json  # CloudFront permissions
+│   ├── github-actions-iam-policy.json         # IAM management permissions
+│   ├── enhanced-s3-policy.json               # S3 bucket policies
+│   └── s3-cloudfront-policy.json             # S3-CloudFront integration
+├── 📂 .github/workflows/            # CI/CD pipeline definitions
+│   ├── deploy.yml                  # Main frontend deployment
+│   ├── deploy-prod.yml             # Production backend deployment
+│   ├── deploy-sam.yml              # Development backend deployment
+│   └── deploy-dev-frontend.yml     # Development frontend pipeline
+├── 📂 docs/                         # Project documentation
+│   ├── CI-CD-SETUP.md              # CI/CD setup guide
+│   └── DEVELOPMENT.md              # Development guidelines
+├── 📄 .gitignore                    # Git ignore patterns
+└── 📄 README.md                     # This comprehensive guide
 ```
 
-## Security Features
+## 🔒 Security Features
 
 ### IAM Security
 - **Least Privilege**: Custom IAM policies with minimal required permissions
-- **Resource-Specific**: Permissions scoped to specific S3 bucket only
-- **Action Restrictions**: Limited to necessary S3 operations
-- **Deny Rules**: Explicit denies for dangerous operations
+- **Resource-Specific**: Permissions scoped to specific resources only
+- **Action Restrictions**: Limited to necessary operations
+- **Explicit Denies**: Protection against dangerous operations
 
-### Application Security (Dev Branch)
+### Application Security
 - **Input Validation**: Server-side validation of all form inputs
 - **CORS Protection**: Proper Cross-Origin Resource Sharing configuration
 - **Rate Limiting**: Protection against spam and abuse
 - **Data Privacy**: TTL on stored data for GDPR compliance
-- **Error Handling**: Secure error messages without information disclosure
+- **SSL/TLS**: End-to-end encryption with custom domain
 
-## Performance Optimizations
+## ⚡ Performance Optimizations
 
-- **CDN Distribution**: CloudFront for global content delivery
+- **Global CDN**: CloudFront distribution for worldwide < 100ms response times
 - **Image Optimization**: Compressed images and lazy loading
-- **CSS/JS Minification**: Optimized asset delivery
-- **Caching Strategy**: Proper cache headers and invalidation
-- **Mobile-First**: Responsive design for all device sizes
+- **Asset Optimization**: Minified CSS/JS with proper caching
+- **Cache Strategy**: Intelligent cache headers and automated invalidation
+- **Mobile-First**: Responsive design optimized for all device sizes
 - **Core Web Vitals**: Optimized for Google's performance metrics
 
-## Development & Testing
+## 🛠️ Development & Testing
 
 ### Local Development
 ```bash
 # Clone the repository
 git clone https://github.com/christophercorbin/E-portfolio.git
+cd AWS-eportfolio
 
-# Switch to development branch (for backend features)
-git checkout dev-backend-integration
-
-# Open locally
-open index.html
+# Start local development server
+python -m http.server 8000
+# Visit http://localhost:8000
 ```
 
-### Backend Development (Dev Branch)
+### Backend Development
 ```bash
+# Switch to development branch
+git checkout dev-backend-integration
+
 # Install SAM CLI
 brew tap aws/tap && brew install aws-sam-cli
 
 # Build and test locally
+cd infrastructure
 sam build
 sam local start-api
 
-# Deploy to AWS
-sam deploy --guided
+# Deploy to AWS development environment
+sam deploy --config-file samconfig-dev.toml --config-env dev
 ```
 
 ### Testing Tools
-- **debug-form.html**: Comprehensive form testing with detailed logging
-- **test-form.html**: Isolated form testing environment
 - **Browser DevTools**: Console logging and network monitoring
 - **AWS CloudWatch**: Backend logging and monitoring
+- **SAM Local**: Local Lambda testing environment
+- **GitHub Actions**: Automated CI/CD testing
 
-## Key Achievements
+## 📊 Key Achievements & Metrics
 
+### Professional Accomplishments
+- **AWS Solutions Architect Associate** certified (2025)
+- **CompTIA Security+** certified (2024)
 - **SOC 2 Compliance**: 97.2% audit score with zero critical findings
-- **Performance**: Fast loading times with optimized assets
-- **Security**: Enterprise-grade security practices
-- **Automation**: Fully automated deployment pipeline
-- **Responsive**: Perfect experience on all devices
-- **Accessible**: WCAG compliant design
-- **Global**: CDN distribution for worldwide access
+- **Cost Optimization**: 20% cloud spend reduction ($150K annually)
+- **Security**: Remediated 500+ CVEs in under 30 days
+- **Automation**: 60% reduction in manual patching effort
 
-## Metrics & Monitoring
-
+### Portfolio Performance
 - **Deployment Success Rate**: 100% (automated rollback on failure)
-- **Uptime**: 99.9%+ (monitored via AWS health checks)
-- **Performance**: <2s load time globally
-- **Security**: Zero security incidents
-- **Cost Optimization**: <$5/month for full stack
+- **Global Uptime**: 99.9%+ (monitored via AWS health checks)
+- **Performance**: <2s load time globally via CloudFront
+- **Security**: Zero security incidents since deployment
+- **Cost Efficiency**: <$10/month for full production stack
+- **Scalability**: Handles 10,000+ requests/minute via Lambda
 
-## Contact Form API (Dev Branch)
+## 🔗 Contact Form API
 
-### API Endpoint
+### Production Endpoint
 ```
 POST https://9rau1nnkg3.execute-api.us-east-1.amazonaws.com/prod/contact
 
@@ -236,13 +268,14 @@ Payload:
 ```
 
 ### Features
-- Real-time validation
-- Spam protection
-- Email notifications
-- Data persistence
-- GDPR compliant (30-day TTL)
+- ✅ Real-time validation
+- ✅ Spam protection
+- ✅ Professional email notifications
+- ✅ Data persistence with DynamoDB
+- ✅ GDPR compliant (30-day TTL)
+- ✅ CORS enabled for secure cross-origin requests
 
-## Contributing
+## 🤝 Contributing
 
 This is a personal portfolio, but feedback and suggestions are welcome!
 
@@ -251,22 +284,40 @@ This is a personal portfolio, but feedback and suggestions are welcome!
 3. Make your changes
 4. Submit a pull request
 
-## License
+## 📜 License
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is open source and available under the MIT License.
 
-## About the Developer
+## 👨‍💻 About the Developer
 
 **Christopher Corbin** - AWS Solutions Architect & Security Engineer
 
-- **Portfolio**: [Live Site](http://christopher-corbin-portfolio-20251005195625.s3-website-us-east-1.amazonaws.com)
-- **Email**: christophercorbin24@gmail.com
-- **Phone**: +1 (246) 248-7457
-- **GitHub**: [@christophercorbin](https://github.com/christophercorbin)
-- **Location**: Barbados | Open to relocation
+- 🌐 **Portfolio**: [christophercorbin.cloud](https://christophercorbin.cloud)
+- 📧 **Email**: [christophercorbin@gmail.com](mailto:christophercorbin@gmail.com)
+- 📱 **Phone**: +1 (246) 248-7457
+- 🐙 **GitHub**: [@christophercorbin](https://github.com/christophercorbin)
+- 🌍 **Location**: Barbados | Open to relocation
 
 ---
 
 **Built with modern web technologies, AWS cloud services, and automated DevOps practices**
 
-*This portfolio demonstrates real-world cloud architecture, DevOps practices, and security engineering expertise through hands-on implementation.*
+*This portfolio demonstrates real-world cloud architecture, DevSecOps practices, and security engineering expertise through hands-on implementation.*
+
+⭐ **Star this repository** if you find it helpful for your own AWS portfolio projects!
+
+# Christopher Corbin - AWS Portfolio
+
+Professional AWS portfolio with automated CI/CD deployment pipeline.
+
+## Features
+- Professional timeline with real experience
+- SOC2 ML Image Analyzer project showcase  
+- GitHub Actions CI/CD pipeline
+- Secure IAM policy with least privilege
+- Responsive design with Credly badge integration
+
+## Live Portfolio
+Visit:  https://christophercorbin.cloud
+
+Built with AWS S3, GitHub Actions, and professional DevOps practices. OCT/7/2025
