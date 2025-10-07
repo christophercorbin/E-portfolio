@@ -235,6 +235,30 @@ body {
     animation: float 3s ease-in-out infinite;
     overflow: hidden;
     border: 6px solid white;
+    position: relative;
+}
+
+/* Remove any potential overlay elements or pseudo-elements */
+.profile-card::before,
+.profile-card::after,
+.profile-card .overlay,
+.profile-card .controls,
+.profile-card .button,
+.profile-card [class*="control"],
+.profile-card [class*="overlay"],
+.profile-card [class*="debug"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Prevent any text or content from appearing over the image */
+.profile-card * {
+    pointer-events: none;
+}
+
+.profile-photo {
+    pointer-events: auto;
 }
 
 .profile-photo {
@@ -243,6 +267,8 @@ body {
     object-fit: cover;
     border-radius: 50%;
     transition: var(--transition);
+    position: relative;
+    z-index: 1;
 }
 
 .profile-photo:hover {
@@ -1204,6 +1230,52 @@ section {
 
 .form-group textarea {
     min-height: 120px;
+}
+
+/* Form loading and disabled states */
+.form-group input:disabled,
+.form-group textarea:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btn:disabled {
+    background-color: #6c757d !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    transform: none !important;
+}
+
+.btn:disabled:hover {
+    background-color: #6c757d !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Loading animation for submit button */
+.btn.loading {
+    position: relative;
+}
+
+.btn.loading::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
 }
 
 /* Footer */

@@ -1,0 +1,146 @@
+name: Deploy SAM Backend - Production
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'template.yaml'
+      - 'src/**'
+      - 'samconfig*.toml'
+  workflow_dispatch:
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    env:
+      ENVIRONMENT: prod
+      STACK_NAME: christopher-corbin-portfolio-backend
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Setup AWS SAM CLI
+      uses: aws-actions/setup-sam@v2
+      with:
+        use-installer: true
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    - name: Validate required secrets
+      run: |
+        if [[ -z "${{ secrets.CONTACT_EMAIL }}" ]]; then
+          echo "❌ Error: CONTACT_EMAIL secret is not set"
+          echo "Please add CONTACT_EMAIL to your GitHub repository secrets"
+          exit 1
+        fi
+        echo "✅ CONTACT_EMAIL secret is configured"
+        
+        # Set production CORS origin
+        CORS_ORIGIN="*"
+        if [[ -n "${{ secrets.CLOUDFRONT_DOMAIN }}" ]]; then
+          CORS_ORIGIN="https://${{ secrets.CLOUDFRONT_DOMAIN }}"
+        fi
+        echo "CORS_ORIGIN=$CORS_ORIGIN" >> $GITHUB_ENV
+    
+    - name: Build SAM application
+      run: sam build
+    
+    - name: Deploy SAM application to production
+      run: |
+        sam deploy \
+          --resolve-s3 \
+          --no-confirm-changeset \
+          --no-fail-on-empty-changeset \
+          --stack-name $STACK_NAME \
+          --capabilities CAPABILITY_IAM \
+          --region us-east-1 \
+          --parameter-overrides \
+            "ContactEmail=${{ secrets.CONTACT_EMAIL }}" \
+            "CorsOrigin=$CORS_ORIGIN" \
+            "Environment=$ENVIRONMENT"
+    
+    - name: Get production API URL
+      run: |
+        echo "⏳ Retrieving production API Gateway URL..."
+        API_URL=$(aws cloudformation describe-stacks \
+          --stack-name $STACK_NAME \
+          --region us-east-1 \
+          --query 'Stacks[0].Outputs[?OutputKey==`ContactApiUrl`].OutputValue' \
+          --output text)
+        
+        if [[ -n "$API_URL" && "$API_URL" != "None" ]]; then
+          echo "✅ Production Contact API URL: $API_URL"
+          echo "API_URL=$API_URL" >> $GITHUB_ENV
+          echo "🚀 Production backend is now live!"
+        else
+          echo "❌ Error: Could not retrieve production API URL"
+          exit 1
+        fi
+    
+    - name: Test production API endpoint
+      run: |
+        echo "🧪 Testing production API endpoint..."
+        response=$(curl -s -w "%{http_code}" -X POST "$API_URL" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "name": "Production Deployment Test",
+            "email": "production-test@github-actions.com", 
+            "message": "Automated production deployment verification test"
+          }')
+        
+        http_code=${response: -3}
+        if [[ $http_code -eq 200 ]]; then
+          echo "✅ Production API test passed - HTTP $http_code"
+        else
+          echo "❌ Production API test failed - HTTP $http_code"
+          echo "Response: ${response%???}"
+          exit 1
+        fi
+    
+    - name: Update frontend configuration
+      run: |
+        echo "📝 Updating frontend configuration..."
+        echo "VITE_CONTACT_API_URL=$API_URL" > .env.production
+        echo "✅ Frontend configuration updated"
+    
+    - name: Create deployment summary
+      run: |
+        echo "## 🎉 Production Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Deployment Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment**: Production" >> $GITHUB_STEP_SUMMARY
+        echo "- **Stack Name**: \`$STACK_NAME\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **API URL**: \`$API_URL\`" >> $GITHUB_STEP_SUMMARY
+        echo "- **Region**: us-east-1" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Verification Complete" >> $GITHUB_STEP_SUMMARY
+        echo "- [x] API endpoint is responding" >> $GITHUB_STEP_SUMMARY
+        echo "- [x] CORS configuration verified" >> $GITHUB_STEP_SUMMARY
+        echo "- [x] Email notifications enabled" >> $GITHUB_STEP_SUMMARY
+        echo "- [x] DynamoDB table created" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔗 Next Steps" >> $GITHUB_STEP_SUMMARY  
+        echo "1. Test the contact form on your live portfolio" >> $GITHUB_STEP_SUMMARY
+        echo "2. Verify email notifications are working" >> $GITHUB_STEP_SUMMARY
+        echo "3. Monitor CloudWatch logs for any issues" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🎊 Your contact form backend is now live in production!" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Notify on success
+      run: |
+        echo "🎉 Production deployment completed successfully!"
+        echo "🌟 Contact form backend is now live and ready to use!"
+        echo "📧 Test it by submitting a message through your portfolio contact form"

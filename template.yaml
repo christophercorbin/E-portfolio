@@ -1,0 +1,181 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Serverless Contact Form for Christopher Corbin Portfolio'
+
+Parameters:
+  ContactEmail:
+    Type: String
+    Default: 'christophercorbin24@gmail.com'
+    Description: 'Email address to receive contact form submissions'
+  
+  CorsOrigin:
+    Type: String
+    Description: CORS origin for API Gateway
+    Default: "*"
+  
+  Environment:
+    Type: String
+    Description: Environment name (dev, prod)
+    Default: prod
+    AllowedValues:
+      - dev
+      - prod
+
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: python3.9
+    Environment:
+      Variables:
+        CONTACT_EMAIL: !Ref ContactEmail
+        CORS_ORIGIN: !Ref CorsOrigin
+
+Resources:
+  # Lambda function to process contact form submissions
+  ContactFormFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-contact-form'
+      CodeUri: src/
+      Handler: contact_handler.lambda_handler
+      Description: 'Process contact form submissions and send emails via SES'
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref ContactSubmissionsTable
+      Policies:
+        - SESCrudPolicy:
+            IdentityName: !Ref ContactEmail
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ContactSubmissionsTable
+      Events:
+        ContactFormApi:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ContactFormApi
+            Path: /contact
+            Method: post
+
+  # API Gateway for contact form endpoint
+  ContactFormApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub '${AWS::StackName}-api'
+      StageName: prod
+      Cors:
+        AllowMethods: "'POST, OPTIONS'"
+        AllowHeaders: "'Content-Type, X-Amz-Date, Authorization, X-Api-Key, X-Amz-Security-Token'"
+        AllowOrigin: !Sub "'${CorsOrigin}'"
+        AllowCredentials: false
+      DefinitionBody:
+        openapi: '3.0.1'
+        info:
+          title: 'Contact Form API'
+          version: '1.0'
+        paths:
+          /contact:
+            post:
+              summary: 'Submit contact form'
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      required:
+                        - name
+                        - email
+                        - message
+                      properties:
+                        name:
+                          type: string
+                          minLength: 1
+                          maxLength: 100
+                        email:
+                          type: string
+                          format: email
+                        message:
+                          type: string
+                          minLength: 10
+                          maxLength: 1000
+              responses:
+                '200':
+                  description: 'Message sent successfully'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      schema:
+                        type: string
+                '400':
+                  description: 'Invalid request'
+                '500':
+                  description: 'Server error'
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ContactFormFunction.Arn}/invocations'
+            options:
+              summary: 'CORS preflight'
+              responses:
+                '200':
+                  description: 'CORS headers'
+                  headers:
+                    Access-Control-Allow-Origin:
+                      schema:
+                        type: string
+                    Access-Control-Allow-Methods:
+                      schema:
+                        type: string
+                    Access-Control-Allow-Headers:
+                      schema:
+                        type: string
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Methods: "'POST,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Origin: !Sub "'${CorsOrigin}'"
+
+  # DynamoDB table to store contact form submissions
+  ContactSubmissionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-submissions'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: submissionId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: submissionId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+Outputs:
+  ContactFormApi:
+    Description: 'API Gateway endpoint URL for contact form'
+    Value: !Sub 'https://${ContactFormApi}.execute-api.${AWS::Region}.amazonaws.com/prod/contact'
+    Export:
+      Name: !Sub '${AWS::StackName}-ContactFormApiUrl'
+  
+  ContactFormFunction:
+    Description: 'Lambda function ARN'
+    Value: !GetAtt ContactFormFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ContactFormFunctionArn'
+  
+  DynamoDBTable:
+    Description: 'DynamoDB table name'
+    Value: !Ref ContactSubmissionsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-DynamoDBTable'

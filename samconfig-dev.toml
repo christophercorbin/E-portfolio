@@ -1,0 +1,23 @@
+# SAM configuration file for Christopher Corbin Portfolio - Development Environment
+
+version = 0.1
+
+[dev]
+[dev.deploy]
+[dev.deploy.parameters]
+stack_name = "christopher-corbin-portfolio-backend-dev"
+s3_prefix = "christopher-corbin-portfolio-backend-dev"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+fail_on_empty_changeset = false
+parameter_overrides = [
+    "ContactEmail=christophercorbin24@gmail.com",
+    "CorsOrigin=*",
+    "Environment=dev"
+]
+
+[dev.build]
+[dev.build.parameters]
+cached = true
+parallel = true
