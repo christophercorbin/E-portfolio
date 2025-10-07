@@ -48,3 +48,17 @@ bucket-policy*.json
 # Resume files (keep local only)
 *.pdf
 resume-pdf.html
+
+# AWS temporary files
+.cert-arn.txt
+.cloudfront-info.txt
+*.arn
+
+# Development and backup files
+index-*-temp.*
+*-backup.*
+*.bak
+
+# Professional cleanup - temporary AWS outputs
+stack-outputs.json
+deployment-info.txt

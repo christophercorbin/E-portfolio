@@ -9,19 +9,19 @@ on:
   push:
     branches: [ dev-backend-integration ]
     paths:
-      - 'template.yaml'
+      - 'infrastructure/template.yaml'
       - 'src/**'
-      - 'samconfig*.toml'
+      - 'infrastructure/samconfig*.toml'
       - '.github/workflows/deploy-sam.yml'
-      - 'github-actions-sam-policy.json'
+      - 'aws-config/github-actions-sam-policy.json'
   pull_request:
     branches: [ main ]
     paths:
-      - 'template.yaml'
+      - 'infrastructure/template.yaml'
       - 'src/**'
-      - 'samconfig*.toml'
+      - 'infrastructure/samconfig*.toml'
       - '.github/workflows/deploy-sam.yml'
-      - 'github-actions-sam-policy.json'
+      - 'aws-config/github-actions-sam-policy.json'
   workflow_dispatch:
     inputs:
       environment:
@@ -69,6 +69,7 @@ jobs:
         aws-region: us-east-1
     
     - name: Build SAM application
+      working-directory: infrastructure
       run: sam build
     
     - name: Validate required secrets
@@ -88,6 +89,7 @@ jobs:
         echo "CORS_ORIGIN=$CORS_ORIGIN" >> $GITHUB_ENV
     
     - name: Deploy SAM application
+      working-directory: infrastructure
       run: |
         if [ "$ENVIRONMENT" = "dev" ]; then
           # Use dev-specific configuration

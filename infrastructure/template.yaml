@@ -36,7 +36,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub '${AWS::StackName}-contact-form'
-      CodeUri: src/
+      CodeUri: ../src/
       Handler: contact_handler.lambda_handler
       Description: 'Process contact form submissions and send emails via SES'
       Environment:
