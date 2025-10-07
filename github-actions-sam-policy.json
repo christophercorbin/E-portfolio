@@ -207,26 +207,6 @@
       }
     },
     {
-      "Sid": "AllowIAMRoleForLambda",
-      "Effect": "Allow",
-      "Action": [
-        "iam:CreateRole",
-        "iam:DeleteRole",
-        "iam:GetRole",
-        "iam:PassRole",
-        "iam:AttachRolePolicy",
-        "iam:DetachRolePolicy",
-        "iam:PutRolePolicy",
-        "iam:DeleteRolePolicy",
-        "iam:GetRolePolicy",
-        "iam:TagRole",
-        "iam:UntagRole"
-      ],
-      "Resource": [
-        "arn:aws:iam::*:role/christopher-corbin-portfolio-backend-*"
-      ]
-    },
-    {
       "Sid": "DenyDangerousOperations",
       "Effect": "Deny",
       "Action": [

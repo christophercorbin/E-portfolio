@@ -78,7 +78,7 @@ jobs:
         API_URL=$(aws cloudformation describe-stacks \
           --stack-name $STACK_NAME \
           --region us-east-1 \
-          --query 'Stacks[0].Outputs[?OutputKey==`ContactApiUrl`].OutputValue' \
+          --query 'Stacks[0].Outputs[?OutputKey==`ContactFormApi`].OutputValue' \
           --output text)
         
         if [[ -n "$API_URL" && "$API_URL" != "None" ]]; then
