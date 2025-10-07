@@ -318,6 +318,6 @@ Professional AWS portfolio with automated CI/CD deployment pipeline.
 - Responsive design with Credly badge integration
 
 ## Live Portfolio
-Visit: http://christopher-corbin-portfolio-20251005195625.s3-website-us-east-1.amazonaws.com
+Visit:  https://christophercorbin.cloud
 
 Built with AWS S3, GitHub Actions, and professional DevOps practices. OCT/7/2025
