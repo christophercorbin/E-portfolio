@@ -320,4 +320,4 @@ Professional AWS portfolio with automated CI/CD deployment pipeline.
 ## Live Portfolio
 Visit:  https://christophercorbin.cloud
 
-Built with AWS S3, GitHub Actions, and professional DevOps practices. OCT/7/2025
+Built with AWS S3, GitHub Actions, and professional DevOps practices. nov/18/2025
