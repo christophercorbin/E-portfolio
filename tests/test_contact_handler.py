@@ -5,7 +5,7 @@ import sys
 import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch, MagicMock
-from moto import mock_dynamodb, mock_ses
+from moto import mock_aws
 import boto3
 
 # Add src to path for imports
@@ -146,8 +146,7 @@ class TestValidation:
 class TestLambdaHandler:
     """Test Lambda handler function."""
     
-    @mock_dynamodb
-    @mock_ses
+    @mock_aws
     def test_successful_submission(self, lambda_event, lambda_context):
         """Test successful form submission."""
         # Setup mocked AWS resources
@@ -203,8 +202,7 @@ class TestLambdaHandler:
         body = json.loads(response['body'])
         assert 'json' in body['error'].lower()
     
-    @mock_dynamodb
-    @mock_ses
+    @mock_aws
     def test_invalid_form_data(self, lambda_context):
         """Test handler rejects invalid form data."""
         event = {
@@ -239,8 +237,7 @@ class TestErrorResponse:
 class TestIntegration:
     """Integration tests for complete workflow."""
     
-    @mock_dynamodb
-    @mock_ses
+    @mock_aws
     def test_end_to_end_submission(self, lambda_event, lambda_context):
         """Test complete submission workflow."""
         # Setup AWS resources

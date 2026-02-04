@@ -139,10 +139,9 @@ pytest tests/test_contact_handler.py::TestValidation::test_valid_form_data -v
 Tests use `moto` library to mock AWS services:
 
 ```python
-from moto import mock_dynamodb, mock_ses
+from moto import mock_aws
 
-@mock_dynamodb
-@mock_ses
+@mock_aws
 def test_with_aws_mocks():
     # AWS services are mocked automatically
     dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
