@@ -18,6 +18,8 @@
     "no-undef": "error"
   },
   "globals": {
-    "API_CONFIG": "readonly"
+    "API_CONFIG": "readonly",
+    "module": "readonly",
+    "gtag": "readonly"
   }
 }

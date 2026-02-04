@@ -1,326 +1,361 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Christopher Corbin - Resume</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.4;
-            color: #333;
-            background: white;
-            font-size: 11px;
-        }
+      body {
+        font-family: 'Arial', sans-serif;
+        line-height: 1.4;
+        color: #333;
+        background: white;
+        font-size: 11px;
+      }
 
-        .resume {
-            max-width: 8.5in;
-            margin: 0 auto;
-            padding: 0.5in;
-            background: white;
-        }
+      .resume {
+        max-width: 8.5in;
+        margin: 0 auto;
+        padding: 0.5in;
+        background: white;
+      }
 
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #ff9900;
-            padding-bottom: 20px;
-            margin-bottom: 25px;
-        }
+      .header {
+        text-align: center;
+        border-bottom: 2px solid #ff9900;
+        padding-bottom: 20px;
+        margin-bottom: 25px;
+      }
 
-        .header h1 {
-            font-size: 28px;
-            color: #232f3e;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
+      .header h1 {
+        font-size: 28px;
+        color: #232f3e;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
 
-        .header h2 {
-            font-size: 16px;
-            color: #ff9900;
-            margin-bottom: 10px;
-            font-weight: normal;
-        }
+      .header h2 {
+        font-size: 16px;
+        color: #ff9900;
+        margin-bottom: 10px;
+        font-weight: normal;
+      }
 
-        .header .contact {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            font-size: 10px;
-        }
+      .header .contact {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        font-size: 10px;
+      }
 
-        .section {
-            margin-bottom: 20px;
-        }
+      .section {
+        margin-bottom: 20px;
+      }
 
-        .section-title {
-            font-size: 14px;
-            color: #232f3e;
-            border-bottom: 1px solid #ff9900;
-            padding-bottom: 3px;
-            margin-bottom: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
+      .section-title {
+        font-size: 14px;
+        color: #232f3e;
+        border-bottom: 1px solid #ff9900;
+        padding-bottom: 3px;
+        margin-bottom: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
 
-        .experience-item {
-            margin-bottom: 15px;
-            page-break-inside: avoid;
-        }
+      .experience-item {
+        margin-bottom: 15px;
+        page-break-inside: avoid;
+      }
 
-        .job-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 3px;
-        }
+      .job-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 3px;
+      }
 
-        .job-title {
-            font-size: 12px;
-            color: #232f3e;
-            font-weight: bold;
-        }
+      .job-title {
+        font-size: 12px;
+        color: #232f3e;
+        font-weight: bold;
+      }
 
-        .job-period {
-            font-size: 10px;
-            color: #666;
-            font-style: italic;
-        }
+      .job-period {
+        font-size: 10px;
+        color: #666;
+        font-style: italic;
+      }
 
-        .company {
-            font-size: 11px;
-            color: #ff9900;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
+      .company {
+        font-size: 11px;
+        color: #ff9900;
+        margin-bottom: 5px;
+        font-weight: 600;
+      }
 
-        .achievements {
-            margin-left: 15px;
-        }
+      .achievements {
+        margin-left: 15px;
+      }
 
-        .achievements li {
-            margin-bottom: 3px;
-            font-size: 10px;
-            line-height: 1.3;
-        }
+      .achievements li {
+        margin-bottom: 3px;
+        font-size: 10px;
+        line-height: 1.3;
+      }
 
-        .skills-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
+      .skills-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
 
-        .skill-category h4 {
-            color: #232f3e;
-            font-size: 11px;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
+      .skill-category h4 {
+        color: #232f3e;
+        font-size: 11px;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
 
-        .skill-items {
-            font-size: 10px;
-            line-height: 1.4;
-        }
+      .skill-items {
+        font-size: 10px;
+        line-height: 1.4;
+      }
 
-        .certifications-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
+      .certifications-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
 
-        .cert-item {
-            font-size: 10px;
-            margin-bottom: 3px;
-        }
+      .cert-item {
+        font-size: 10px;
+        margin-bottom: 3px;
+      }
 
-        .cert-name {
-            font-weight: bold;
-            color: #232f3e;
-        }
+      .cert-name {
+        font-weight: bold;
+        color: #232f3e;
+      }
 
-        .cert-issuer {
-            color: #666;
-        }
+      .cert-issuer {
+        color: #666;
+      }
 
-        .summary {
-            text-align: justify;
-            font-size: 10px;
-            line-height: 1.4;
-        }
+      .summary {
+        text-align: justify;
+        font-size: 10px;
+        line-height: 1.4;
+      }
 
-        .projects {
-            font-size: 10px;
-        }
+      .projects {
+        font-size: 10px;
+      }
 
-        .project-item {
-            margin-bottom: 8px;
-        }
+      .project-item {
+        margin-bottom: 8px;
+      }
 
-        .project-name {
-            font-weight: bold;
-            color: #232f3e;
-            margin-bottom: 2px;
-        }
+      .project-name {
+        font-weight: bold;
+        color: #232f3e;
+        margin-bottom: 2px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="resume">
-        <div class="header">
-            <h1>Christopher Corbin</h1>
-            <h2>AWS Solutions Architect & Security Engineer</h2>
-            <div class="contact">
-                <span>📧 Christophercorbin@gmail.com</span>
-                <span>📱 +1 (246) 248-7457</span>
-                <span>🌐 github.com/christophercorbin</span>
-                <span>💼 christophercorbin.cloud</span>
-                <span>📍 Barbados | Open to relocation</span>
-            </div>
+      <div class="header">
+        <h1>Christopher Corbin</h1>
+        <h2>AWS Solutions Architect & Security Engineer</h2>
+        <div class="contact">
+          <span>📧 Christophercorbin@gmail.com</span>
+          <span>📱 +1 (246) 248-7457</span>
+          <span>🌐 github.com/christophercorbin</span>
+          <span>💼 christophercorbin.cloud</span>
+          <span>📍 Barbados | Open to relocation</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Professional Summary</h3>
+        <div class="summary">
+          AWS-certified Cloud & Security Engineer with a record of deploying multi-stack secure
+          architectures using AWS CDK and Terraform, aligned to AWS Well-Architected best practices.
+          Strengthened enterprise security across a 14-account AWS organization with 2,000+
+          resources by hardening container images, automating patching, and remediating 500+ CVEs
+          within 30 days—reducing manual effort by 60% and lowering costs. Achieved SOC 2 compliance
+          with a 97.2% audit score and zero critical findings; implemented CI/CD pipelines (GitHub
+          Actions) and production-grade workloads (Docker, ECS, serverless) to accelerate releases
+          and improve resilience.
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Professional Experience</h3>
+
+        <div class="experience-item">
+          <div class="job-header">
+            <div class="job-title">AWS SysOps / Cloud & Security Engineer</div>
+            <div class="job-period">Feb 2025 – Present</div>
+          </div>
+          <div class="company">Protexxa – Remote</div>
+          <ul class="achievements">
+            <li>
+              Lead Technical Engineer on Amazon Connect deployment across 3 AWS regions, improving
+              customer response times by 35% for 1,000+ users
+            </li>
+            <li>
+              Managed 14 AWS accounts with 2,000+ resources supporting public-facing workloads
+            </li>
+            <li>
+              Achieved SOC 2 compliance (97.2% audit score, zero critical findings) and influenced
+              C-suite investment decisions
+            </li>
+            <li>Optimized EC2/RDS workloads, saving 20% cloud spend (~$150K annually)</li>
+            <li>
+              Automated patching pipelines (Linux, Windows) with SSM, cutting manual effort by 60%
+            </li>
+            <li>Remediated 500+ CVEs in under 30 days</li>
+          </ul>
         </div>
 
-        <div class="section">
-            <h3 class="section-title">Professional Summary</h3>
-            <div class="summary">
-                AWS-certified Cloud & Security Engineer with a record of deploying multi-stack secure architectures using AWS CDK and Terraform, aligned to AWS Well-Architected best practices. Strengthened enterprise security across a 14-account AWS organization with 2,000+ resources by hardening container images, automating patching, and remediating 500+ CVEs within 30 days—reducing manual effort by 60% and lowering costs. Achieved SOC 2 compliance with a 97.2% audit score and zero critical findings; implemented CI/CD pipelines (GitHub Actions) and production-grade workloads (Docker, ECS, serverless) to accelerate releases and improve resilience.
-            </div>
+        <div class="experience-item">
+          <div class="job-header">
+            <div class="job-title">Technical Guide & Operations</div>
+            <div class="job-period">Jul 2021 – Present</div>
+          </div>
+          <div class="company">TORE Barbados – Barbados</div>
+          <ul class="achievements">
+            <li>
+              Delivered technical guidance for off-road tours, ensuring safety and smooth operations
+            </li>
+            <li>Designed and led team-building events, improving collaboration and satisfaction</li>
+            <li>Reduced equipment downtime by 20% through proactive maintenance</li>
+          </ul>
         </div>
 
-        <div class="section">
-            <h3 class="section-title">Professional Experience</h3>
-            
-            <div class="experience-item">
-                <div class="job-header">
-                    <div class="job-title">AWS SysOps / Cloud & Security Engineer</div>
-                    <div class="job-period">Feb 2025 – Present</div>
-                </div>
-                <div class="company">Protexxa – Remote</div>
-                <ul class="achievements">
-                    <li>Lead Technical Engineer on Amazon Connect deployment across 3 AWS regions, improving customer response times by 35% for 1,000+ users</li>
-                    <li>Managed 14 AWS accounts with 2,000+ resources supporting public-facing workloads</li>
-                    <li>Achieved SOC 2 compliance (97.2% audit score, zero critical findings) and influenced C-suite investment decisions</li>
-                    <li>Optimized EC2/RDS workloads, saving 20% cloud spend (~$150K annually)</li>
-                    <li>Automated patching pipelines (Linux, Windows) with SSM, cutting manual effort by 60%</li>
-                    <li>Remediated 500+ CVEs in under 30 days</li>
-                </ul>
-            </div>
-
-            <div class="experience-item">
-                <div class="job-header">
-                    <div class="job-title">Technical Guide & Operations</div>
-                    <div class="job-period">Jul 2021 – Present</div>
-                </div>
-                <div class="company">TORE Barbados – Barbados</div>
-                <ul class="achievements">
-                    <li>Delivered technical guidance for off-road tours, ensuring safety and smooth operations</li>
-                    <li>Designed and led team-building events, improving collaboration and satisfaction</li>
-                    <li>Reduced equipment downtime by 20% through proactive maintenance</li>
-                </ul>
-            </div>
-
-            <div class="experience-item">
-                <div class="job-header">
-                    <div class="job-title">Apple Representative</div>
-                    <div class="job-period">Oct 2021 – Sep 2024</div>
-                </div>
-                <div class="company">iShop – Barbados</div>
-                <ul class="achievements">
-                    <li>Delivered customer education and technical support for Apple devices</li>
-                    <li>Conducted product demonstrations and workshops</li>
-                    <li>Acted as liaison for escalated technical cases</li>
-                </ul>
-            </div>
+        <div class="experience-item">
+          <div class="job-header">
+            <div class="job-title">Apple Representative</div>
+            <div class="job-period">Oct 2021 – Sep 2024</div>
+          </div>
+          <div class="company">iShop – Barbados</div>
+          <ul class="achievements">
+            <li>Delivered customer education and technical support for Apple devices</li>
+            <li>Conducted product demonstrations and workshops</li>
+            <li>Acted as liaison for escalated technical cases</li>
+          </ul>
         </div>
+      </div>
 
-        <div class="section">
-            <h3 class="section-title">Core Technical Skills</h3>
-            <div class="skills-grid">
-                <div class="skill-category">
-                    <h4>Cloud Platforms & Services</h4>
-                    <div class="skill-items">AWS (EC2, S3, RDS, VPC, IAM, Lambda, ECS, ECR, Systems Manager, Inspector, CloudFormation, CDK, Elastic Beanstalk), Multi-account management (14 accounts, 2,000+ resources), Azure Security</div>
-                </div>
-                <div class="skill-category">
-                    <h4>Security & Compliance</h4>
-                    <div class="skill-items">SOC 2, NIST CSF, CIS Benchmarks, PCI DSS, GDPR alignment, Container hardening, Vulnerability management (500+ CVEs), Patch automation (SSM)</div>
-                </div>
-                <div class="skill-category">
-                    <h4>DevSecOps & IaC</h4>
-                    <div class="skill-items">AWS CDK (multi-stack), CloudFormation/SAM, Terraform (modular IaC), GitHub Actions CI/CD, Docker, ECS, Kubernetes, Serverless (Lambda, API Gateway, DynamoDB, Step Functions)</div>
-                </div>
-                <div class="skill-category">
-                    <h4>Programming & Scripting</h4>
-                    <div class="skill-items">Python, Bash, PowerShell, Infrastructure automation, Security scripts, ML integration</div>
-                </div>
+      <div class="section">
+        <h3 class="section-title">Core Technical Skills</h3>
+        <div class="skills-grid">
+          <div class="skill-category">
+            <h4>Cloud Platforms & Services</h4>
+            <div class="skill-items">
+              AWS (EC2, S3, RDS, VPC, IAM, Lambda, ECS, ECR, Systems Manager, Inspector,
+              CloudFormation, CDK, Elastic Beanstalk), Multi-account management (14 accounts, 2,000+
+              resources), Azure Security
             </div>
-        </div>
-
-        <div class="section">
-            <h3 class="section-title">Selected Projects</h3>
-            <div class="projects">
-                <div class="project-item">
-                    <div class="project-name"> SOC2 ML Image Analyzer</div>
-                    Enterprise-grade ML image analysis system with SOC 2 compliance, containerized workflows, and automated security scanning achieving sub-5 minute deployments.
-                </div>
-                <div class="project-item">
-                    <div class="project-name"> Cloud-Native Task Management System</div>
-                    Built multi-stack infrastructure (EC2, RDS, S3, IAM) with AWS CDK demonstrating IaC best practices and Well-Architected principles.
-                </div>
-                <div class="project-item">
-                    <div class="project-name"> Secure Moodle LMS Deployment</div>
-                    Designed Moodle LMS with VPC, ALB, Aurora MySQL, and Systems Manager automation for enterprise educational platform.
-                </div>
+          </div>
+          <div class="skill-category">
+            <h4>Security & Compliance</h4>
+            <div class="skill-items">
+              SOC 2, NIST CSF, CIS Benchmarks, PCI DSS, GDPR alignment, Container hardening,
+              Vulnerability management (500+ CVEs), Patch automation (SSM)
             </div>
-        </div>
-
-        <div class="section">
-            <h3 class="section-title">Education & Certifications</h3>
-            <div class="certifications-grid">
-                <div>
-                    <div class="cert-item">
-                        <div class="cert-name">BSc Computer Science</div>
-                        <div class="cert-issuer">University of the West Indies, Cave Hill</div>
-                    </div>
-                    <div class="cert-item">
-                        <div class="cert-name">AWS Solutions Architect – Associate</div>
-                        <div class="cert-issuer">Amazon Web Services (2025)</div>
-                    </div>
-                    <div class="cert-item">
-                        <div class="cert-name">CompTIA Security+ ce</div>
-                        <div class="cert-issuer">CompTIA (2024)</div>
-                    </div>
-                </div>
-                <div>
-                    <div class="cert-item">
-                        <div class="cert-name">Cybersecurity Analyst Certificate</div>
-                        <div class="cert-issuer">CyberNations & George Brown College (2024)</div>
-                    </div>
-                    <div class="cert-item">
-                        <div class="cert-name">Cisco Networking & Cybersecurity Badges</div>
-                        <div class="cert-issuer">Cisco (2024)</div>
-                    </div>
-                    <div class="cert-item">
-                        <div class="cert-name">AWS DevOps Engineer – Professional</div>
-                        <div class="cert-issuer">In Progress</div>
-                    </div>
-                </div>
+          </div>
+          <div class="skill-category">
+            <h4>DevSecOps & IaC</h4>
+            <div class="skill-items">
+              AWS CDK (multi-stack), CloudFormation/SAM, Terraform (modular IaC), GitHub Actions
+              CI/CD, Docker, ECS, Kubernetes, Serverless (Lambda, API Gateway, DynamoDB, Step
+              Functions)
             </div>
+          </div>
+          <div class="skill-category">
+            <h4>Programming & Scripting</h4>
+            <div class="skill-items">
+              Python, Bash, PowerShell, Infrastructure automation, Security scripts, ML integration
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="section">
-            <h3 class="section-title">Key Achievements</h3>
-            <ul class="achievements">
-                <li>🏆 Achieved 97.2% SOC 2 compliance audit score with zero critical findings</li>
-                <li>🚀 Remediated 500+ CVEs in under 30 days, reducing security risk by 95%</li>
-                <li>💰 Optimized cloud infrastructure saving $150K annually (20% cost reduction)</li>
-                <li>⚡ Reduced manual patching effort by 60% through automation</li>
-                <li>☁️ Successfully managed 14 AWS accounts with 2,000+ resources</li>
-                <li>📞 Improved customer response times by 35% through Amazon Connect deployment</li>
-            </ul>
+      <div class="section">
+        <h3 class="section-title">Selected Projects</h3>
+        <div class="projects">
+          <div class="project-item">
+            <div class="project-name">SOC2 ML Image Analyzer</div>
+            Enterprise-grade ML image analysis system with SOC 2 compliance, containerized
+            workflows, and automated security scanning achieving sub-5 minute deployments.
+          </div>
+          <div class="project-item">
+            <div class="project-name">Cloud-Native Task Management System</div>
+            Built multi-stack infrastructure (EC2, RDS, S3, IAM) with AWS CDK demonstrating IaC best
+            practices and Well-Architected principles.
+          </div>
+          <div class="project-item">
+            <div class="project-name">Secure Moodle LMS Deployment</div>
+            Designed Moodle LMS with VPC, ALB, Aurora MySQL, and Systems Manager automation for
+            enterprise educational platform.
+          </div>
         </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Education & Certifications</h3>
+        <div class="certifications-grid">
+          <div>
+            <div class="cert-item">
+              <div class="cert-name">BSc Computer Science</div>
+              <div class="cert-issuer">University of the West Indies, Cave Hill</div>
+            </div>
+            <div class="cert-item">
+              <div class="cert-name">AWS Solutions Architect – Associate</div>
+              <div class="cert-issuer">Amazon Web Services (2025)</div>
+            </div>
+            <div class="cert-item">
+              <div class="cert-name">CompTIA Security+ ce</div>
+              <div class="cert-issuer">CompTIA (2024)</div>
+            </div>
+          </div>
+          <div>
+            <div class="cert-item">
+              <div class="cert-name">Cybersecurity Analyst Certificate</div>
+              <div class="cert-issuer">CyberNations & George Brown College (2024)</div>
+            </div>
+            <div class="cert-item">
+              <div class="cert-name">Cisco Networking & Cybersecurity Badges</div>
+              <div class="cert-issuer">Cisco (2024)</div>
+            </div>
+            <div class="cert-item">
+              <div class="cert-name">AWS DevOps Engineer – Professional</div>
+              <div class="cert-issuer">In Progress</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 class="section-title">Key Achievements</h3>
+        <ul class="achievements">
+          <li>🏆 Achieved 97.2% SOC 2 compliance audit score with zero critical findings</li>
+          <li>🚀 Remediated 500+ CVEs in under 30 days, reducing security risk by 95%</li>
+          <li>💰 Optimized cloud infrastructure saving $150K annually (20% cost reduction)</li>
+          <li>⚡ Reduced manual patching effort by 60% through automation</li>
+          <li>☁️ Successfully managed 14 AWS accounts with 2,000+ resources</li>
+          <li>📞 Improved customer response times by 35% through Amazon Connect deployment</li>
+        </ul>
+      </div>
     </div>
-</body>
+  </body>
 </html>
