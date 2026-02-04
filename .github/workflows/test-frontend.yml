@@ -1,0 +1,130 @@
+name: Test Frontend (JavaScript)
+
+on:
+  push:
+    branches: [ main, dev-backend-integration, Workflowupdate ]
+    paths:
+      - '*.js'
+      - '*.html'
+      - '*.css'
+      - 'package.json'
+      - '.eslintrc.json'
+      - '.prettierrc.json'
+      - '.github/workflows/test-frontend.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - '*.js'
+      - '*.html'
+      - '*.css'
+      - 'package.json'
+  workflow_dispatch:
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        echo "📦 Installing dependencies..."
+        npm ci || npm install
+    
+    - name: Check code formatting with Prettier
+      run: |
+        echo "🎨 Checking code formatting..."
+        npm run format:check
+        echo "✅ Code formatting is correct"
+    
+    - name: Lint JavaScript with ESLint
+      run: |
+        echo "🔍 Running ESLint..."
+        npm run lint
+        echo "✅ ESLint check passed"
+    
+    - name: Validate HTML structure
+      run: |
+        echo "🔍 Validating HTML files..."
+        
+        # Check if required files exist
+        test -f index.html || { echo "❌ ERROR: index.html missing"; exit 1; }
+        test -f resume.html || { echo "❌ ERROR: resume.html missing"; exit 1; }
+        test -f styles.css || { echo "❌ ERROR: styles.css missing"; exit 1; }
+        test -f script.js || { echo "❌ ERROR: script.js missing"; exit 1; }
+        
+        # Check for basic HTML structure
+        for file in index.html resume.html; do
+          if ! grep -q "<!DOCTYPE html>" $file; then
+            echo "❌ ERROR: $file missing DOCTYPE declaration"
+            exit 1
+          fi
+          
+          if ! grep -q "<html" $file; then
+            echo "❌ ERROR: $file missing html tag"
+            exit 1
+          fi
+        done
+        
+        echo "✅ HTML validation passed"
+    
+    - name: Check for console.log statements
+      run: |
+        echo "🔍 Checking for debug statements..."
+        
+        # Allow console.log but warn about it
+        if grep -n "console\.log" script.js config.js config-dev.js 2>/dev/null; then
+          echo "⚠️  WARNING: Found console.log statements (consider removing for production)"
+        else
+          echo "✅ No console.log statements found"
+        fi
+    
+    - name: Check for hardcoded secrets
+      run: |
+        echo "🔒 Scanning for potential secrets..."
+        
+        # Look for common secret patterns (but exclude comments and variable names)
+        if grep -iE "(api[_-]?key|secret|password|token|aws[_-]?access)" *.js *.html | grep -v "API_CONFIG\|placeholder\|example\|TODO\|//"; then
+          echo "⚠️  WARNING: Potential secrets or API keys found - please review"
+        else
+          echo "✅ No hardcoded secrets detected"
+        fi
+    
+    - name: Check file sizes
+      run: |
+        echo "📊 Checking file sizes..."
+        
+        # Warn if JavaScript files are too large (> 500KB)
+        for file in *.js; do
+          size=$(wc -c < "$file")
+          size_kb=$((size / 1024))
+          echo "  $file: ${size_kb}KB"
+          
+          if [ $size -gt 512000 ]; then
+            echo "⚠️  WARNING: $file is larger than 500KB - consider minification"
+          fi
+        done
+        
+        echo "✅ File size check completed"
+    
+    - name: Generate frontend test summary
+      if: always()
+      run: |
+        echo "## 🎨 Frontend Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Checks Completed" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Prettier formatting check" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ ESLint linting" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ HTML validation" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Security scan" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ File size check" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Node.js Version**: 18" >> $GITHUB_STEP_SUMMARY

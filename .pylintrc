@@ -1,0 +1,24 @@
+[MAIN]
+# Python code to execute
+init-hook='import sys; sys.path.append("src")'
+
+[MESSAGES CONTROL]
+# Disable specific warnings
+disable=
+    C0111,  # missing-docstring
+    R0913,  # too-many-arguments
+    R0914,  # too-many-locals
+    W0703,  # broad-except (we catch general exceptions in Lambda)
+    C0103,  # invalid-name
+
+[FORMAT]
+# Maximum line length
+max-line-length=120
+
+[DESIGN]
+# Minimum number of public methods
+min-public-methods=0
+
+[TYPECHECK]
+# List of members which are set dynamically
+generated-members=boto3.*
