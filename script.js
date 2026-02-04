@@ -207,7 +207,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (response.ok) {
         showNotification(
-          result.message || 'Message sent successfully! I\'ll get back to you soon.',
+          // eslint-disable-next-line quotes
+          result.message || "Message sent successfully! I'll get back to you soon.",
           'success'
         );
         contactForm.reset();
