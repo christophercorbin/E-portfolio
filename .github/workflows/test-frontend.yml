@@ -63,7 +63,7 @@ jobs:
         
         # Check for basic HTML structure
         for file in index.html resume.html; do
-          if ! grep -q "<!DOCTYPE html>" $file; then
+          if ! grep -iq "doctype html" $file; then
             echo "❌ ERROR: $file missing DOCTYPE declaration"
             exit 1
           fi
