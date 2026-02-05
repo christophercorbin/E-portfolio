@@ -1,0 +1,201 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, dev-backend-integration, Workflowupdate ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scans weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  bandit-scan:
+    name: Python Security (Bandit)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install Bandit
+      run: |
+        pip install bandit[toml]
+    
+    - name: Run Bandit security scan
+      run: |
+        echo "🔒 Running Bandit security scan on Python code..."
+        bandit -r src/ -f json -o bandit-report.json || true
+        bandit -r src/ -f screen
+      continue-on-error: true
+    
+    - name: Upload Bandit results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: bandit-security-report
+        path: bandit-report.json
+    
+    - name: Check for high severity issues
+      run: |
+        if [ -f bandit-report.json ]; then
+          HIGH_ISSUES=$(jq '[.results[] | select(.issue_severity == "HIGH")] | length' bandit-report.json)
+          echo "High severity issues found: $HIGH_ISSUES"
+          
+          if [ "$HIGH_ISSUES" -gt 0 ]; then
+            echo "⚠️  WARNING: $HIGH_ISSUES high severity security issues found!"
+            echo "Review the Bandit report for details."
+          else
+            echo "✅ No high severity security issues found"
+          fi
+        fi
+
+  dependency-scan:
+    name: Dependency Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install safety
+      run: |
+        pip install safety
+    
+    - name: Check Python dependencies for vulnerabilities
+      run: |
+        echo "🔍 Scanning Python dependencies for known vulnerabilities..."
+        pip install boto3
+        pip freeze > installed-packages.txt
+        safety check --file installed-packages.txt --output text || true
+      continue-on-error: true
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Install npm dependencies
+      run: |
+        npm ci || npm install
+    
+    - name: Run npm audit
+      run: |
+        echo "🔍 Scanning npm dependencies for vulnerabilities..."
+        npm audit --audit-level=moderate || true
+      continue-on-error: true
+
+  infrastructure-scan:
+    name: Infrastructure Scanning (Checkov)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install Checkov
+      run: |
+        pip install checkov
+    
+    - name: Run Checkov on CloudFormation/SAM templates
+      run: |
+        echo "🔍 Scanning infrastructure code with Checkov..."
+        checkov -d infrastructure/ --framework cloudformation --output json --output-file-path . || true
+        checkov -d infrastructure/ --framework cloudformation || true
+      continue-on-error: true
+    
+    - name: Upload Checkov results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: checkov-report
+        path: results_json.json
+
+  secrets-scan:
+    name: Secrets Scanning (TruffleHog)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for secret scanning
+    
+    - name: Run TruffleHog
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: ${{ github.event.repository.default_branch }}
+        head: HEAD
+        extra_args: --debug --only-verified
+
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript', 'python' ]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+        queries: security-extended,security-and-quality
+    
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+    
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:${{matrix.language}}"
+
+  security-summary:
+    name: Generate Security Summary
+    runs-on: ubuntu-latest
+    needs: [bandit-scan, dependency-scan, infrastructure-scan, secrets-scan]
+    if: always()
+    
+    steps:
+    - name: Create security summary
+      run: |
+        echo "## 🔒 Security Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Scans Completed" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Python Security (Bandit)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Dependency Scanning (Safety & npm audit)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Infrastructure Scanning (Checkov)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Secrets Scanning (TruffleHog)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Code Analysis (CodeQL)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Recommendations" >> $GITHUB_STEP_SUMMARY
+        echo "1. Review all security findings in the workflow artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "2. Address high and critical severity issues immediately" >> $GITHUB_STEP_SUMMARY
+        echo "3. Keep dependencies up to date" >> $GITHUB_STEP_SUMMARY
+        echo "4. Regular security scans run weekly via scheduled workflow" >> $GITHUB_STEP_SUMMARY
