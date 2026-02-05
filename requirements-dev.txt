@@ -17,3 +17,6 @@ types-boto3==1.0.2
 # Security scanning
 bandit[toml]==1.7.5
 safety==2.3.5
+
+# Integration testing
+requests==2.31.0
