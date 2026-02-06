@@ -85,3 +85,6 @@ ENV/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Local development tracking (not for GitHub)
+DEVELOPMENT_PROGRESS.md
