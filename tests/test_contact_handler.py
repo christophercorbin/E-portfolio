@@ -151,7 +151,7 @@ class TestLambdaHandler:
         """Test successful form submission."""
         # Setup mocked AWS resources
         dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
-        table = dynamodb.create_table(
+        dynamodb.create_table(
             TableName='test-contact-table',
             KeySchema=[{'AttributeName': 'submissionId', 'KeyType': 'HASH'}],
             AttributeDefinitions=[{'AttributeName': 'submissionId', 'AttributeType': 'S'}],
