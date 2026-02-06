@@ -258,20 +258,22 @@ class TestAPIMetrics:
         # Make multiple requests to check consistency
         success_count = 0
         total_requests = 3
+        error_count = 0
         
         for i in range(total_requests):
             try:
                 response = requests.options(API_URL, timeout=TIMEOUT)
                 if response.status_code in [200, 204]:
                     success_count += 1
-            except:
-                pass
+            except requests.RequestException as exc:
+                error_count += 1
+                print(f"⚠️ API availability check attempt {i + 1} failed with exception: {exc}")
         
         availability = (success_count / total_requests) * 100
         assert availability >= 66.0, \
             f"API availability too low: {availability:.1f}% (should be > 66%)"
         
-        print(f"✅ API availability: {availability:.1f}%")
+        print(f"✅ API availability: {availability:.1f}% (errors: {error_count})")
 
 
 def print_test_summary():
