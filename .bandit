@@ -1,0 +1,25 @@
+[bandit]
+# Bandit configuration file
+exclude_dirs = [
+    '/tests',
+    '/.venv',
+    '/venv',
+    '/node_modules',
+    '/.aws-sam'
+]
+
+# Skip specific tests
+skips = [
+    # B101: Test for use of assert - we use assert in tests
+    'B101'
+]
+
+# Test severity levels to report
+# Options: HIGH, MEDIUM, LOW
+# Comment out to report all severities
+# severity = HIGH,MEDIUM
+
+# Confidence levels to report
+# Options: HIGH, MEDIUM, LOW
+# Comment out to report all confidence levels  
+# confidence = HIGH,MEDIUM
