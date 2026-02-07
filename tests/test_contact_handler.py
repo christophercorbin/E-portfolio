@@ -21,8 +21,8 @@ os.environ["AWS_ACCESS_KEY_ID"] = "testing"
 os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
 
 # Import validation functions that don't need AWS
-import contact_handler
-from contact_handler import validate_form_data, create_error_response
+import contact_handler  # noqa: E402
+from contact_handler import validate_form_data, create_error_response  # noqa: E402
 
 
 @pytest.fixture
