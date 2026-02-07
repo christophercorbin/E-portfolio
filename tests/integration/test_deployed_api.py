@@ -6,7 +6,6 @@ They should be run after deployment to validate the live system.
 
 import os
 import sys
-import json
 import requests
 import pytest
 from datetime import datetime
@@ -166,7 +165,8 @@ class TestDeployedAPI:
 
         start_time = time.time()
 
-        response = requests.post(
+        # Make request (response not used, but request must complete for timing)
+        requests.post(
             API_URL, json=valid_contact_data, headers={"Content-Type": "application/json"}, timeout=TIMEOUT
         )
 

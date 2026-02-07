@@ -3,9 +3,9 @@
 import json
 import os
 import sys
+import importlib
 import pytest
-from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 from moto import mock_aws
 import boto3
 
@@ -17,8 +17,12 @@ os.environ["CONTACT_EMAIL"] = "test@example.com"
 os.environ["DYNAMODB_TABLE"] = "test-contact-table"
 os.environ["CORS_ORIGIN"] = "*"
 os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
 
-from contact_handler import lambda_handler, validate_form_data, create_error_response
+# Import validation functions that don't need AWS
+import contact_handler
+from contact_handler import validate_form_data, create_error_response
 
 
 @pytest.fixture
@@ -151,6 +155,10 @@ class TestLambdaHandler:
         ses = boto3.client("ses", region_name="us-east-1")
         ses.verify_email_identity(EmailAddress="test@example.com")
 
+        # Reload contact_handler to pick up mocked AWS clients
+        importlib.reload(contact_handler)
+        from contact_handler import lambda_handler
+
         # Call handler
         response = lambda_handler(lambda_event, lambda_context)
 
@@ -164,6 +172,8 @@ class TestLambdaHandler:
 
     def test_options_request(self, lambda_context):
         """Test CORS preflight OPTIONS request."""
+        from contact_handler import lambda_handler
+
         event = {"httpMethod": "OPTIONS"}
         response = lambda_handler(event, lambda_context)
 
@@ -173,6 +183,8 @@ class TestLambdaHandler:
 
     def test_missing_body(self, lambda_context):
         """Test handler fails gracefully with missing body."""
+        from contact_handler import lambda_handler
+
         event = {"httpMethod": "POST"}
         response = lambda_handler(event, lambda_context)
 
@@ -182,6 +194,8 @@ class TestLambdaHandler:
 
     def test_invalid_json(self, lambda_context):
         """Test handler fails gracefully with invalid JSON."""
+        from contact_handler import lambda_handler
+
         event = {"httpMethod": "POST", "body": "invalid json{"}
         response = lambda_handler(event, lambda_context)
 
@@ -192,6 +206,8 @@ class TestLambdaHandler:
     @mock_aws
     def test_invalid_form_data(self, lambda_context):
         """Test handler rejects invalid form data."""
+        from contact_handler import lambda_handler
+
         event = {
             "httpMethod": "POST",
             "body": json.dumps(
@@ -236,6 +252,10 @@ class TestIntegration:
 
         ses = boto3.client("ses", region_name="us-east-1")
         ses.verify_email_identity(EmailAddress="test@example.com")
+
+        # Reload contact_handler to pick up mocked AWS clients
+        importlib.reload(contact_handler)
+        from contact_handler import lambda_handler
 
         # Submit form
         response = lambda_handler(lambda_event, lambda_context)
