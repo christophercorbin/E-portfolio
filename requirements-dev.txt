@@ -19,4 +19,4 @@ bandit[toml]==1.7.5
 safety==3.7.0
 
 # Integration testing
-requests==2.31.0
+requests==2.32.5
