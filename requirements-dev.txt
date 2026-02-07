@@ -15,8 +15,8 @@ mypy==1.19.1
 types-boto3==1.42.44
 
 # Security scanning
-bandit[toml]==1.9.3
-safety==3.7.0
+bandit[toml]>=1.7.5
+safety>=3.0.0  # v3+ to fix packaging dependency conflict with black
 
 # Integration testing
 requests==2.32.5
