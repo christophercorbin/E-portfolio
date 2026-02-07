@@ -112,6 +112,14 @@ jobs:
           exit 1
         fi
     
+    - name: Run integration tests
+      run: |
+        echo "🧪 Running integration tests against production API..."
+        pip install requests pytest
+        export API_URL="$API_URL"
+        pytest tests/integration/test_deployed_api.py -v --tb=short
+      continue-on-error: false
+    
     - name: Update frontend configuration
       run: |
         echo "📝 Updating frontend configuration..."

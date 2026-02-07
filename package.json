@@ -1,0 +1,21 @@
+{
+  "name": "aws-eportfolio",
+  "version": "1.0.0",
+  "description": "Christopher Corbin's Portfolio - AWS hosted with CI/CD",
+  "scripts": {
+    "lint": "eslint *.js --ignore-pattern 'node_modules/'",
+    "lint:fix": "eslint *.js --fix --ignore-pattern 'node_modules/'",
+    "format": "prettier --write '*.js' '*.html' '*.css'",
+    "format:check": "prettier --check '*.js' '*.html' '*.css'"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/AWS-eportfolio.git"
+  },
+  "author": "Christopher Corbin",
+  "license": "MIT"
+}

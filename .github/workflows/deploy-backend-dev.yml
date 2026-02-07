@@ -156,6 +156,14 @@ jobs:
           exit 1
         fi
     
+    - name: Run integration tests
+      run: |
+        echo "🧪 Running integration tests against deployed API..."
+        pip install requests pytest
+        export API_URL="$API_URL"
+        pytest tests/integration/test_deployed_api.py -v --tb=short || true
+      continue-on-error: true
+    
     - name: Cleanup dev resources (if requested)
       if: github.event.inputs.cleanup == 'true' && env.ENVIRONMENT == 'dev'
       run: |

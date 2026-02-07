@@ -62,3 +62,29 @@ index-*-temp.*
 # Professional cleanup - temporary AWS outputs
 stack-outputs.json
 deployment-info.txt
+
+# Python testing and coverage
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Python virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Local development tracking (not for GitHub)
+DEVELOPMENT_PROGRESS.md
