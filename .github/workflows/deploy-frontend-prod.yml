@@ -9,6 +9,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Only deploy on push events, not pull requests (Dependabot PRs don't have secrets access)
+    if: github.event_name == 'push'
     
     steps:
     - name: Checkout code
