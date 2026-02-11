@@ -47,6 +47,7 @@ bucket-policy*.json
 
 # Resume files (keep local only)
 *.pdf
+!assets/Christopher_Corbin_Resume.pdf
 resume-pdf.html
 
 # AWS temporary files
