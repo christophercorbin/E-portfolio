@@ -12,7 +12,7 @@ on:
       - 'infrastructure/template.yaml'
       - 'src/**'
       - 'infrastructure/samconfig*.toml'
-      - '.github/workflows/deploy-sam.yml'
+      - '.github/workflows/deploy-backend-dev.yml'
       - 'aws-config/github-actions-sam-policy.json'
   pull_request:
     branches: [ main ]
@@ -20,7 +20,7 @@ on:
       - 'infrastructure/template.yaml'
       - 'src/**'
       - 'infrastructure/samconfig*.toml'
-      - '.github/workflows/deploy-sam.yml'
+      - '.github/workflows/deploy-backend-dev.yml'
       - 'aws-config/github-actions-sam-policy.json'
   workflow_dispatch:
     inputs:
