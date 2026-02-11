@@ -8,6 +8,27 @@
       name="description"
       content="AWS-certified Cloud & Security Engineer specializing in secure architectures, DevOps automation, and SOC 2 compliance"
     />
+    <meta
+      property="og:title"
+      content="Christopher Corbin - AWS Solutions Architect & Security Engineer"
+    />
+    <meta
+      property="og:description"
+      content="AWS-certified Cloud & Security Engineer specializing in secure architectures, DevOps automation, and SOC 2 compliance"
+    />
+    <meta property="og:url" content="https://christophercorbin.cloud" />
+    <meta property="og:image" content="https://christophercorbin.cloud/images/profile-photo.jpg" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="Christopher Corbin - AWS Solutions Architect & Security Engineer"
+    />
+    <meta
+      name="twitter:description"
+      content="AWS-certified Cloud & Security Engineer specializing in secure architectures, DevOps automation, and SOC 2 compliance"
+    />
+    <meta name="twitter:image" content="https://christophercorbin.cloud/images/profile-photo.jpg" />
     <link rel="stylesheet" href="styles.css" />
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
@@ -54,7 +75,9 @@
           <div class="hero-buttons">
             <a href="#projects" class="btn btn-primary">View My Work</a>
             <a href="#contact" class="btn btn-secondary">Get In Touch</a>
-            <a href="resume.html" target="_blank" class="btn btn-outline">📄 Download Resume</a>
+            <a href="assets/Christopher_Corbin_Resume.pdf" download class="btn btn-outline"
+              >📄 Download Resume</a
+            >
           </div>
         </div>
         <div class="hero-image">
@@ -521,9 +544,10 @@
             <div class="project-content">
               <h3>SOC2 ML Image Analyzer</h3>
               <p>
-                Secure, SOC2-compliant machine learning image analysis service built with Deepface
-                package. Features advanced facial recognition, containerized deployment on AWS
-                SageMaker, and comprehensive security controls achieving 97.2% compliance score.
+                Enterprises need ML image analysis that meets strict compliance requirements. Built
+                a SOC 2-compliant service using Deepface for facial recognition, with containerized
+                deployment on AWS SageMaker and comprehensive security controls — achieving a 97.2%
+                compliance score with sub-5-minute deployments.
               </p>
               <div class="project-tech">
                 <span>Deepface ML</span>
@@ -558,9 +582,10 @@
             <div class="project-content">
               <h3>Cloud-Native Task Management System</h3>
               <p>
-                Full-stack task checklist application built with AWS CDK multi-stack architecture.
-                Features secure user management, data persistence, and scalable cloud infrastructure
-                following AWS Well-Architected principles.
+                Many teams lack a lightweight, self-hosted task tracker that follows cloud best
+                practices. Built a full-stack task application using AWS CDK multi-stack
+                architecture (EC2, RDS, S3, IAM) — demonstrating reproducible IaC and
+                Well-Architected principles end to end.
               </p>
               <div class="project-tech">
                 <span>AWS CDK</span>
@@ -595,9 +620,10 @@
             <div class="project-content">
               <h3>Secure Moodle Deployment</h3>
               <p>
-                Designed enterprise-grade Moodle LMS with VPC networking, Application Load Balancer,
-                Aurora MySQL database, and Systems Manager automation for secure educational
-                platform.
+                Educational institutions need LMS platforms that are both highly available and
+                secure. Designed an enterprise-grade Moodle deployment with VPC networking, ALB,
+                Aurora MySQL, and Systems Manager automation — delivering a production-ready
+                platform with zero-downtime updates.
               </p>
               <div class="project-tech">
                 <span>VPC</span>
@@ -801,12 +827,15 @@
           <div class="contact-form">
             <form id="contactForm">
               <div class="form-group">
+                <label for="name" class="sr-only">Your Name</label>
                 <input type="text" id="name" name="name" placeholder="Your Name" required />
               </div>
               <div class="form-group">
+                <label for="email" class="sr-only">Your Email</label>
                 <input type="email" id="email" name="email" placeholder="Your Email" required />
               </div>
               <div class="form-group">
+                <label for="message" class="sr-only">Your Message</label>
                 <textarea
                   id="message"
                   name="message"
@@ -825,7 +854,7 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="container">
-        <p>&copy; 2024 Christopher Corbin. Deployed via GitHub CI/CD → AWS S3 + CloudFront.</p>
+        <p>&copy; 2025 Christopher Corbin. Deployed via GitHub CI/CD → AWS S3 + CloudFront.</p>
         <div class="footer-links">
           <a href="https://github.com/christophercorbin" target="_blank"
             ><i class="fab fa-github"></i

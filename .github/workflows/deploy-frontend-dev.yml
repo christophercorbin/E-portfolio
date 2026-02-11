@@ -1,5 +1,8 @@
 name: Deploy Dev Frontend to S3
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ dev-backend-integration ]
@@ -83,25 +86,26 @@ jobs:
       run: |
         echo "🚀 Deploying to development S3 bucket: $DEV_BUCKET"
         
-        # Sync website files with dev-appropriate cache headers
+        SYNC_COMMON="--exclude '*.json' --exclude '*.sh' --exclude '*.md' --exclude '*.toml' --exclude '.DS_Store' --exclude '.git/*' --exclude '.github/*' --exclude 'node_modules/*' --exclude 'src/*' --exclude 'template.yaml' --exclude 'config.js' --exclude '*-bucket-policy.json' --exclude 'docs/*' --exclude 'aws-config/*' --exclude 'infrastructure/*' --exclude 'tests/*' --exclude '.editorconfig' --exclude '.eslintrc.json' --exclude '.prettierrc.json' --exclude 'package*.json' --exclude 'requirements*'"
+
+        # 1. Sync all files with no-cache for dev (HTML)
+        eval aws s3 sync . s3://$DEV_BUCKET --delete $SYNC_COMMON \
+          --cache-control "no-cache, max-age=0"
+
+        # 2. Override CSS with short cache
         aws s3 sync . s3://$DEV_BUCKET \
-          --delete \
-          --exclude "*.json" \
-          --exclude "*.sh" \
-          --exclude "*.md" \
-          --exclude "*.toml" \
-          --exclude ".DS_Store" \
-          --exclude ".git/*" \
-          --exclude ".github/*" \
-          --exclude "node_modules/*" \
-          --exclude "src/*" \
-          --exclude "template.yaml" \
-          --exclude "config.js" \
-          --exclude "*-bucket-policy.json" \
-          --cache-control "text/html:max-age=0,no-cache" \
-          --cache-control "text/css:max-age=300" \
-          --cache-control "application/javascript:max-age=300" \
-          --cache-control "image/*:max-age=3600"
+          --exclude "*" --include "*.css" \
+          --cache-control "max-age=300"
+
+        # 3. Override JS with short cache
+        aws s3 sync . s3://$DEV_BUCKET \
+          --exclude "*" --include "*.js" --exclude "config.js" \
+          --cache-control "max-age=300"
+
+        # 4. Override images with medium cache
+        aws s3 sync . s3://$DEV_BUCKET \
+          --exclude "*" --include "*.jpg" --include "*.jpeg" --include "*.png" --include "*.gif" --include "*.svg" --include "*.webp" --include "*.ico" --include "*.pdf" \
+          --cache-control "max-age=3600"
           
         echo "✅ Dev deployment completed successfully!"
         

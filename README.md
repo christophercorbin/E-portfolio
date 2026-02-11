@@ -305,19 +305,3 @@ This project is open source and available under the MIT License.
 *This portfolio demonstrates real-world cloud architecture, DevSecOps practices, and security engineering expertise through hands-on implementation.*
 
 ⭐ **Star this repository** if you find it helpful for your own AWS portfolio projects!
-
-# Christopher Corbin - AWS Portfolio
-
-Professional AWS portfolio with automated CI/CD deployment pipeline.
-
-## Features
-- Professional timeline with real experience
-- SOC2 ML Image Analyzer project showcase  
-- GitHub Actions CI/CD pipeline
-- Secure IAM policy with least privilege
-- Responsive design with Credly badge integration
-
-## Live Portfolio
-Visit:  https://christophercorbin.cloud
-
-Built with AWS S3, GitHub Actions, and professional DevOps practices. nov/18/2025

@@ -1,5 +1,8 @@
 name: Deploy SAM Backend - Production
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main ]
