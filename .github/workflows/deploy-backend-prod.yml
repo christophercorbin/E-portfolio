@@ -121,7 +121,8 @@ jobs:
         echo "🧪 Running integration tests against production API..."
         pip install requests pytest
         export API_URL="$API_URL"
-        pytest tests/integration/test_deployed_api.py -v --tb=short
+        # Run without coverage options for deployment tests
+        pytest tests/integration/test_deployed_api.py -v --tb=short --no-cov
       continue-on-error: false
     
     - name: Update frontend configuration

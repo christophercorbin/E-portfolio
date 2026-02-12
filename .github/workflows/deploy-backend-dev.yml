@@ -162,7 +162,8 @@ jobs:
         echo "🧪 Running integration tests against deployed API..."
         pip install requests pytest
         export API_URL="$API_URL"
-        pytest tests/integration/test_deployed_api.py -v --tb=short || true
+        # Run without coverage options for deployment tests
+        pytest tests/integration/test_deployed_api.py -v --tb=short --no-cov || true
       continue-on-error: true
     
     - name: Cleanup dev resources (if requested)
