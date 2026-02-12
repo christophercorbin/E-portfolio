@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Cross-account CloudFront access - Production Account Setup'
+
+Parameters:
+  ManagementAccountId:
+    Type: String
+    Default: '438465156498'
+    Description: Management account ID where CloudFront distribution resides
+  
+  CloudFrontRoleName:
+    Type: String
+    Default: 'CloudFrontInvalidationRole'
+    Description: Name of the CloudFront invalidation role in management account
+  
+  GitHubActionsRoleName:
+    Type: String
+    Default: 'GitHubActionsDeployRole'
+    Description: Name of the GitHub Actions role in production account
+
+Resources:
+  AssumeCloudFrontRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AssumeCloudFrontRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AssumeCloudFrontRoleInManagementAccount
+            Effect: Allow
+            Action: 'sts:AssumeRole'
+            Resource: !Sub 'arn:aws:iam::${ManagementAccountId}:role/${CloudFrontRoleName}'
+      Roles:
+        - !Ref GitHubActionsRoleName
+
+Outputs:
+  PolicyName:
+    Description: Name of the IAM policy created
+    Value: !Ref AssumeCloudFrontRolePolicy
+  
+  CloudFrontRoleArn:
+    Description: ARN of the CloudFront role to assume (add to GitHub secrets)
+    Value: !Sub 'arn:aws:iam::${ManagementAccountId}:role/${CloudFrontRoleName}'
+  
+  ExternalId:
+    Description: External ID for assuming the role (add to GitHub secrets)
+    Value: 'christopher-corbin-portfolio-cloudfront-access'
+  
+  SetupComplete:
+    Description: Setup status
+    Value: 'Production account configured for cross-account CloudFront access'

@@ -116,13 +116,16 @@ jobs:
           exit 1
         fi
     
+    - name: Install test dependencies
+      run: |
+        echo "📦 Installing test dependencies..."
+        pip install requests pytest pytest-cov
+    
     - name: Run integration tests
       run: |
         echo "🧪 Running integration tests against production API..."
-        pip install requests pytest
         export API_URL="$API_URL"
-        # Run without coverage options for deployment tests
-        pytest tests/integration/test_deployed_api.py -v --tb=short --no-cov
+        pytest tests/integration/test_deployed_api.py -v --tb=short
       continue-on-error: false
     
     - name: Update frontend configuration

@@ -114,15 +114,73 @@ jobs:
           
         echo "SUCCESS: S3 deployment completed successfully!"
         
+    - name: Assume CloudFront role in management account
+      id: assume-cloudfront-role
+      env:
+        CLOUDFRONT_ROLE_ARN: ${{ secrets.CLOUDFRONT_ROLE_ARN }}
+        CLOUDFRONT_EXTERNAL_ID: ${{ secrets.CLOUDFRONT_EXTERNAL_ID }}
+      run: |
+        if [[ -z "$CLOUDFRONT_ROLE_ARN" ]]; then
+          echo "⚠️  CLOUDFRONT_ROLE_ARN secret not configured"
+          echo "SKIP_INVALIDATION=true" >> $GITHUB_ENV
+          exit 0
+        fi
+        
+        echo "🔐 Assuming CloudFront role in management account..."
+        CREDENTIALS=$(aws sts assume-role \
+          --role-arn "$CLOUDFRONT_ROLE_ARN" \
+          --role-session-name GitHubActions-CloudFrontInvalidation \
+          --external-id "$CLOUDFRONT_EXTERNAL_ID" \
+          --duration-seconds 900 \
+          --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+          --output text)
+        
+        if [[ -z "$CREDENTIALS" ]]; then
+          echo "❌ Failed to assume CloudFront role"
+          echo "SKIP_INVALIDATION=true" >> $GITHUB_ENV
+          exit 0
+        fi
+        
+        # Export credentials for next step
+        echo "AWS_ACCESS_KEY_ID=$(echo $CREDENTIALS | awk '{print $1}')" >> $GITHUB_ENV
+        echo "AWS_SECRET_ACCESS_KEY=$(echo $CREDENTIALS | awk '{print $2}')" >> $GITHUB_ENV
+        echo "AWS_SESSION_TOKEN=$(echo $CREDENTIALS | awk '{print $3}')" >> $GITHUB_ENV
+        echo "SKIP_INVALIDATION=false" >> $GITHUB_ENV
+        echo "✅ Successfully assumed CloudFront role"
+    
     - name: Invalidate CloudFront Cache
+      if: env.SKIP_INVALIDATION != 'true'
+      env:
+        DISTRIBUTION_ID: E34Q2E7TZIYZAB
+        CUSTOM_DOMAIN: christophercorbin.cloud
+      run: |
+        echo "🔄 Invalidating CloudFront cache..."
+        INVALIDATION_ID=$(aws cloudfront create-invalidation \
+          --distribution-id $DISTRIBUTION_ID \
+          --paths '/*' \
+          --query 'Invalidation.Id' \
+          --output text)
+        
+        if [[ -n "$INVALIDATION_ID" ]]; then
+          echo "✅ CloudFront invalidation created: $INVALIDATION_ID"
+          echo "🌐 Your changes will be live at: https://$CUSTOM_DOMAIN"
+          echo "⏳ Cache invalidation takes 1-3 minutes to complete"
+          echo "INVALIDATION_ID=$INVALIDATION_ID" >> $GITHUB_ENV
+        else
+          echo "❌ Failed to create CloudFront invalidation"
+          exit 1
+        fi
+    
+    - name: Manual invalidation instructions
+      if: env.SKIP_INVALIDATION == 'true'
       env:
         DISTRIBUTION_ID: E34Q2E7TZIYZAB
         CUSTOM_DOMAIN: christophercorbin.cloud
       run: |
         echo "📝 S3 deployment completed successfully!"
         echo ""
-        echo "⚠️  Note: CloudFront distribution is in management account (438465156498)"
-        echo "🔄 To invalidate CloudFront cache, run this command in the management account:"
+        echo "⚠️  Cross-account CloudFront access not configured"
+        echo "🔄 To invalidate CloudFront cache manually, run this command in the management account:"
         echo ""
         echo "aws cloudfront create-invalidation \\"
         echo "  --distribution-id E34Q2E7TZIYZAB \\"
@@ -136,6 +194,8 @@ jobs:
         echo ""
         echo "🌐 Your changes will be live at: https://christophercorbin.cloud"
         echo "⏳ Cache invalidation takes 1-3 minutes to complete"
+        echo ""
+        echo "To enable automatic invalidation, see: docs/CROSS-ACCOUNT-CLOUDFRONT-SETUP.md"
         
     - name: Verify deployment
       env:
