@@ -51,6 +51,64 @@ jobs:
         aws sts get-caller-identity
         echo "✅ AWS credentials verified via OIDC"
         
+    - name: Setup Dev S3 Bucket (if needed)
+      run: |
+        echo "🔍 Checking if dev bucket exists..."
+        
+        if aws s3 ls "s3://$DEV_BUCKET" 2>&1 | grep -q 'NoSuchBucket'; then
+          echo "📦 Creating dev S3 bucket: $DEV_BUCKET"
+          
+          # Create bucket
+          aws s3api create-bucket \
+            --bucket $DEV_BUCKET \
+            --region us-east-1
+          
+          # Enable versioning
+          aws s3api put-bucket-versioning \
+            --bucket $DEV_BUCKET \
+            --versioning-configuration Status=Enabled
+          
+          # Configure website hosting
+          aws s3 website s3://$DEV_BUCKET/ \
+            --index-document index.html \
+            --error-document index.html
+          
+          # Configure public access for dev
+          aws s3api put-public-access-block \
+            --bucket $DEV_BUCKET \
+            --public-access-block-configuration \
+              "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+          
+          # Add bucket policy for public read
+          cat > /tmp/dev-bucket-policy.json << 'EOF'
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::christopher-corbin-portfolio-dev-20251006/*"
+        }
+    ]
+}
+EOF
+          
+          aws s3api put-bucket-policy \
+            --bucket $DEV_BUCKET \
+            --policy file:///tmp/dev-bucket-policy.json
+          
+          # Add tags
+          aws s3api put-bucket-tagging \
+            --bucket $DEV_BUCKET \
+            --tagging "TagSet=[{Key=Environment,Value=dev},{Key=Project,Value=christopher-corbin-portfolio},{Key=ManagedBy,Value=GitHubActions}]"
+          
+          echo "✅ Dev bucket created and configured successfully!"
+        else
+          echo "✅ Dev bucket already exists"
+        fi
+        
     - name: Prepare dev environment files
       run: |
         echo "🔧 Preparing development environment..."
