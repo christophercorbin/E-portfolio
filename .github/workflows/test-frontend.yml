@@ -1,5 +1,8 @@
 name: Test Frontend (JavaScript)
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main, dev-backend-integration, Workflowupdate ]
@@ -37,7 +40,7 @@ jobs:
     - name: Install dependencies
       run: |
         echo "📦 Installing dependencies..."
-        npm ci || npm install
+        npm ci
     
     - name: Check code formatting with Prettier
       run: |

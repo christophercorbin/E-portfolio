@@ -1,6 +1,6 @@
 # Christopher Corbin - AWS Solutions Architect & Security Engineer Portfolio
 
-[![Deploy Status](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy.yml) [![SAM Backend](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-prod.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-prod.yml)
+[![Dev Frontend](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-frontend-dev.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-frontend-dev.yml) [![Dev Backend](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-backend-dev.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-backend-dev.yml) [![Prod Frontend](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-frontend-prod.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-frontend-prod.yml) [![Prod Backend](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-backend-prod.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-backend-prod.yml)
 
 Professional portfolio showcasing AWS expertise, security engineering, and DevOps automation. Built with enterprise-grade cloud architecture, custom domain, and fully automated CI/CD pipelines.
 
@@ -36,18 +36,51 @@ Professional portfolio showcasing AWS expertise, security engineering, and DevOp
 
 ## 🏗️ Architecture
 
+### Multi-Account Structure
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    AWS Organization (438465156498)               │
+│                         Management Account                       │
+│                                                                  │
+│  ┌────────────────────┐  ┌────────────────────┐                │
+│  │  CloudFront CDN    │  │  Route 53 DNS      │                │
+│  │  E34Q2E7TZIYZAB    │  │  christophercorbin │                │
+│  │                    │  │  .cloud            │                │
+│  └────────────────────┘  └────────────────────┘                │
+└─────────────────────────────────────────────────────────────────┘
+           │                           │
+           ▼                           ▼
+┌──────────────────────┐    ┌──────────────────────┐
+│  Dev Account         │    │  Prod Account        │
+│  (934862608865)      │    │  (590716168923)      │
+│                      │    │                      │
+│  • S3 Bucket (Dev)   │    │  • S3 Bucket (Prod)  │
+│  • Lambda (Dev)      │    │  • Lambda (Prod)     │
+│  • API Gateway (Dev) │    │  • API Gateway       │
+│  • DynamoDB (Dev)    │    │  • DynamoDB          │
+└──────────────────────┘    └──────────────────────┘
+           ▲                           ▲
+           │                           │
+           └───────────┬───────────────┘
+                       │
+              ┌────────────────┐
+              │ GitHub Actions │
+              │  OIDC Auth     │
+              └────────────────┘
+```
+
 ### Frontend Architecture
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   GitHub Repo   │    │  GitHub Actions  │    │   AWS S3 Bucket │
-│                 │───▶│                  │───▶│                 │
+│                 │───▶│   (OIDC Auth)    │───▶│  (Per Account)  │
 │   Static Files  │    │  Build & Deploy  │    │  Static Hosting │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                                                          │
                                                          ▼
                                                 ┌─────────────────┐
                                                 │ AWS CloudFront  │
-                                                │                 │
+                                                │ (Management)    │
                                                 │ Global CDN      │
                                                 └─────────────────┘
                                                          │
@@ -64,7 +97,7 @@ Professional portfolio showcasing AWS expertise, security engineering, and DevOp
 ```
 ┌─────────────┐    ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Browser   │    │  API Gateway    │    │  Lambda Function │    │   DynamoDB      │
-│             │───▶│                 │───▶│                  │───▶│                 │
+│             │───▶│  (Per Account)  │───▶│  (Per Account)   │───▶│  (Per Account)  │
 │ Contact Form│    │  REST Endpoint  │    │  Form Handler    │    │  Submissions    │
 └─────────────┘    └─────────────────┘    └──────────────────┘    └─────────────────┘
                                                      │
@@ -102,19 +135,20 @@ Professional portfolio showcasing AWS expertise, security engineering, and DevOp
 
 ## ☁️ AWS Services Used
 
-| Service | Purpose | Implementation |
-|---------|---------|----------------|
-| **S3** | Static website hosting | Bucket with website configuration |
-| **CloudFront** | Content Delivery Network | Global distribution with custom domain |
-| **Route 53** | DNS Management | Custom domain with SSL |
-| **Certificate Manager** | SSL/TLS Certificates | Automated certificate provisioning |
-| **Lambda** | Serverless compute | Contact form processing |
-| **API Gateway** | RESTful API endpoints | CORS-enabled REST API |
-| **DynamoDB** | NoSQL database | Contact form submissions |
-| **SES** | Simple Email Service | Professional email notifications |
-| **IAM** | Identity and Access Management | Least-privilege security policies |
-| **CloudFormation** | Infrastructure as Code | SAM template deployments |
-| **CloudWatch** | Logging and monitoring | Application and infrastructure monitoring |
+| Service | Purpose | Implementation | Account |
+|---------|---------|----------------|---------|
+| **AWS Organizations** | Multi-account management | Centralized billing and governance | Management (438465156498) |
+| **S3** | Static website hosting | Separate buckets per environment | Dev (934862608865) / Prod (590716168923) |
+| **CloudFront** | Content Delivery Network | Global distribution with custom domain | Management (438465156498) |
+| **Route 53** | DNS Management | Custom domain with SSL | Management (438465156498) |
+| **Certificate Manager** | SSL/TLS Certificates | Automated certificate provisioning | Management (438465156498) |
+| **Lambda** | Serverless compute | Contact form processing per environment | Dev / Prod |
+| **API Gateway** | RESTful API endpoints | CORS-enabled REST API per environment | Dev / Prod |
+| **DynamoDB** | NoSQL database | Contact form submissions per environment | Dev / Prod |
+| **SES** | Simple Email Service | Professional email notifications | Dev / Prod |
+| **IAM** | Identity and Access Management | OIDC + least-privilege policies per account | All accounts |
+| **CloudFormation** | Infrastructure as Code | SAM template deployments per environment | Dev / Prod |
+| **CloudWatch** | Logging and monitoring | Per-account monitoring | All accounts |
 
 ## 🚀 Deployment Process
 
@@ -132,10 +166,16 @@ Professional portfolio showcasing AWS expertise, security engineering, and DevOp
    - Verifies deployment success
 5. **Health Check**: Automated testing of live site
 
-### Branch Strategy
-- **main**: Production-ready code, auto-deploys to live site
-- **dev-backend-integration**: Development branch for backend features
+### Branch Strategy (Multi-Account)
+- **main**: Production-ready code, deploys to Production account (590716168923)
+- **develop**: Development branch, deploys to Development account (934862608865)
+- **dev-backend-integration**: Backend development, deploys to Development account
 - **Feature branches**: For individual features and experiments
+
+### Account Mapping
+- **Development Branches** (develop, dev-backend-integration) → Dev Account (934862608865)
+- **Production Branches** (main, master) → Prod Account (590716168923)
+- **Shared Services** (CloudFront, Route53) → Management Account (438465156498)
 
 ## 📁 Project Structure (Clean & Professional)
 
@@ -177,11 +217,19 @@ AWS-eportfolio/
 
 ## 🔒 Security Features
 
+### Multi-Account Security
+- **Account Isolation**: Dev and Prod resources in separate AWS accounts
+- **OIDC Authentication**: No long-lived credentials, temporary tokens only
+- **Cross-Account Protection**: Prevents accidental production changes
+- **Audit Trail**: CloudTrail logging in all accounts
+- **Consolidated Billing**: Cost tracking per account
+
 ### IAM Security
-- **Least Privilege**: Custom IAM policies with minimal required permissions
+- **Least Privilege**: Custom IAM policies with minimal required permissions per account
+- **Account-Specific Policies**: Dev has broader permissions, Prod is restricted
 - **Resource-Specific**: Permissions scoped to specific resources only
-- **Action Restrictions**: Limited to necessary operations
-- **Explicit Denies**: Protection against dangerous operations
+- **Action Restrictions**: Limited to necessary operations per environment
+- **Explicit Denies**: Protection against dangerous operations in production
 
 ### Application Security
 - **Input Validation**: Server-side validation of all form inputs
@@ -240,6 +288,7 @@ sam deploy --config-file samconfig-dev.toml --config-env dev
 ### Professional Accomplishments
 - **AWS Solutions Architect Associate** certified (2025)
 - **CompTIA Security+** certified (2024)
+- **Multi-Account AWS Architecture**: Implemented enterprise-grade account separation
 - **SOC 2 Compliance**: 97.2% audit score with zero critical findings
 - **Cost Optimization**: 20% cloud spend reduction ($150K annually)
 - **Security**: Remediated 500+ CVEs in under 30 days
@@ -252,6 +301,29 @@ sam deploy --config-file samconfig-dev.toml --config-env dev
 - **Security**: Zero security incidents since deployment
 - **Cost Efficiency**: <$10/month for full production stack
 - **Scalability**: Handles 10,000+ requests/minute via Lambda
+- **Multi-Account Setup**: 3 AWS accounts with proper isolation
+
+## 🏢 Multi-Account AWS Setup
+
+This portfolio demonstrates enterprise-grade AWS architecture using multiple accounts:
+
+### Account Structure
+- **Development Account (934862608865)**: Isolated environment for testing and experimentation
+- **Production Account (590716168923)**: Live production workloads with restricted access
+- **Management Account (438465156498)**: Organization management and shared services
+
+### Benefits
+- **Security**: Complete isolation between dev and prod environments
+- **Cost Management**: Separate billing and cost tracking per environment
+- **Compliance**: Audit trail and governance across all accounts
+- **Risk Mitigation**: Prevents accidental production changes during development
+
+### Authentication
+- **OIDC Integration**: GitHub Actions uses OpenID Connect for secure, temporary credentials
+- **No Long-Lived Keys**: Zero AWS access keys stored in GitHub secrets
+- **Least Privilege**: Account-specific IAM policies with minimal permissions
+
+📖 **Documentation**: See `docs/MULTI-ACCOUNT-IMPLEMENTATION-GUIDE.md` for complete setup guide
 
 ## 🔗 Contact Form API
 
@@ -288,6 +360,16 @@ This is a personal portfolio, but feedback and suggestions are welcome!
 
 This project is open source and available under the MIT License.
 
+## 📚 Documentation
+
+- **Multi-Account Setup**: `.kiro/steering/multi-account-aws-setup.md`
+- **Implementation Guide**: `docs/MULTI-ACCOUNT-IMPLEMENTATION-GUIDE.md`
+- **Quick Reference**: `docs/MULTI-ACCOUNT-QUICK-REFERENCE.md`
+- **Audit Report**: `docs/MULTI-ACCOUNT-AUDIT.md`
+- **CI/CD Setup**: `docs/CI-CD-SETUP.md`
+- **Development Guide**: `docs/DEVELOPMENT.md`
+- **OIDC Setup**: `GITHUB-ACTIONS-OIDC-SETUP.md`
+
 ## 👨‍💻 About the Developer
 
 **Christopher Corbin** - AWS Solutions Architect & Security Engineer
@@ -305,19 +387,3 @@ This project is open source and available under the MIT License.
 *This portfolio demonstrates real-world cloud architecture, DevSecOps practices, and security engineering expertise through hands-on implementation.*
 
 ⭐ **Star this repository** if you find it helpful for your own AWS portfolio projects!
-
-# Christopher Corbin - AWS Portfolio
-
-Professional AWS portfolio with automated CI/CD deployment pipeline.
-
-## Features
-- Professional timeline with real experience
-- SOC2 ML Image Analyzer project showcase  
-- GitHub Actions CI/CD pipeline
-- Secure IAM policy with least privilege
-- Responsive design with Credly badge integration
-
-## Live Portfolio
-Visit:  https://christophercorbin.cloud
-
-Built with AWS S3, GitHub Actions, and professional DevOps practices. nov/18/2025

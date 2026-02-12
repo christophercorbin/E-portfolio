@@ -1,8 +1,12 @@
 name: Deploy Dev Frontend to S3
 
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
 on:
   push:
-    branches: [ dev-backend-integration ]
+    branches: [ develop, dev-backend-integration ]
     paths:
       - 'index.html'
       - 'resume.html'
@@ -10,7 +14,7 @@ on:
       - 'styles.css'
       - 'config-dev.js'
       - 'images/**'
-      - '.github/workflows/deploy-dev-frontend.yml'
+      - '.github/workflows/deploy-frontend-dev.yml'
   workflow_dispatch:
     inputs:
       force_deploy:
@@ -32,12 +36,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Configure AWS credentials
+    - name: Configure AWS credentials via OIDC
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: arn:aws:iam::934862608865:role/GitHubActionsDeployRole
         aws-region: us-east-1
+        role-session-name: GitHubActions-DevFrontend
         
     - name: Verify AWS CLI and credentials
       run: |
@@ -45,7 +49,56 @@ jobs:
         aws --version
         echo "Testing AWS credentials:"
         aws sts get-caller-identity
-        echo "✅ AWS credentials verified"
+        echo "✅ AWS credentials verified via OIDC"
+        
+    - name: Setup Dev S3 Bucket (if needed)
+      run: |
+        echo "🔍 Checking if dev bucket exists..."
+        
+        if aws s3 ls "s3://$DEV_BUCKET" 2>&1 | grep -q 'NoSuchBucket'; then
+          echo "📦 Creating dev S3 bucket: $DEV_BUCKET"
+          
+          # Create bucket
+          aws s3api create-bucket \
+            --bucket $DEV_BUCKET \
+            --region us-east-1
+          
+          # Enable versioning
+          aws s3api put-bucket-versioning \
+            --bucket $DEV_BUCKET \
+            --versioning-configuration Status=Enabled
+          
+          # Configure website hosting
+          aws s3 website s3://$DEV_BUCKET/ \
+            --index-document index.html \
+            --error-document index.html
+          
+          # Configure public access for dev
+          aws s3api put-public-access-block \
+            --bucket $DEV_BUCKET \
+            --public-access-block-configuration \
+              "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+          
+          # Add bucket policy for public read using inline JSON
+          aws s3api put-bucket-policy \
+            --bucket $DEV_BUCKET \
+            --policy "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"PublicReadGetObject\",\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"s3:GetObject\",\"Resource\":\"arn:aws:s3:::$DEV_BUCKET/*\"}]}"
+          
+          # Add tags
+          aws s3api put-bucket-tagging \
+            --bucket $DEV_BUCKET \
+            --tagging "TagSet=[{Key=Environment,Value=dev},{Key=Project,Value=christopher-corbin-portfolio},{Key=ManagedBy,Value=GitHubActions}]"
+          
+          echo "✅ Dev bucket created and configured successfully!"
+        else
+          echo "✅ Dev bucket already exists"
+        fi
+        
+    - name: Update dev config with backend API URL
+      run: |
+        echo "🔧 Updating dev configuration with backend API URL..."
+        chmod +x infrastructure/update-dev-config.sh
+        ./infrastructure/update-dev-config.sh
         
     - name: Prepare dev environment files
       run: |
@@ -83,25 +136,26 @@ jobs:
       run: |
         echo "🚀 Deploying to development S3 bucket: $DEV_BUCKET"
         
-        # Sync website files with dev-appropriate cache headers
+        SYNC_COMMON="--exclude '*.json' --exclude '*.sh' --exclude '*.md' --exclude '*.toml' --exclude '.DS_Store' --exclude '.git/*' --exclude '.github/*' --exclude 'node_modules/*' --exclude 'src/*' --exclude 'template.yaml' --exclude 'config.js' --exclude '*-bucket-policy.json' --exclude 'docs/*' --exclude 'aws-config/*' --exclude 'infrastructure/*' --exclude 'tests/*' --exclude '.editorconfig' --exclude '.eslintrc.json' --exclude '.prettierrc.json' --exclude 'package*.json' --exclude 'requirements*'"
+        
+        # 1. Sync all files with no-cache for dev (HTML)
+        eval aws s3 sync . s3://$DEV_BUCKET --delete $SYNC_COMMON \
+          --cache-control "no-cache,max-age=0"
+
+        # 2. Override CSS with short cache
         aws s3 sync . s3://$DEV_BUCKET \
-          --delete \
-          --exclude "*.json" \
-          --exclude "*.sh" \
-          --exclude "*.md" \
-          --exclude "*.toml" \
-          --exclude ".DS_Store" \
-          --exclude ".git/*" \
-          --exclude ".github/*" \
-          --exclude "node_modules/*" \
-          --exclude "src/*" \
-          --exclude "template.yaml" \
-          --exclude "config.js" \
-          --exclude "*-bucket-policy.json" \
-          --cache-control "text/html:max-age=0,no-cache" \
-          --cache-control "text/css:max-age=300" \
-          --cache-control "application/javascript:max-age=300" \
-          --cache-control "image/*:max-age=3600"
+          --exclude "*" --include "*.css" \
+          --cache-control "max-age=300"
+
+        # 3. Override JS with short cache
+        aws s3 sync . s3://$DEV_BUCKET \
+          --exclude "*" --include "*.js" --exclude "config.js" \
+          --cache-control "max-age=300"
+
+        # 4. Override images with medium cache
+        aws s3 sync . s3://$DEV_BUCKET \
+          --exclude "*" --include "*.jpg" --include "*.jpeg" --include "*.png" --include "*.gif" --include "*.svg" --include "*.webp" --include "*.ico" --include "*.pdf" \
+          --cache-control "max-age=3600"
           
         echo "✅ Dev deployment completed successfully!"
         
@@ -122,28 +176,47 @@ jobs:
         fi
         
     - name: Test dev backend integration
+      continue-on-error: true
       run: |
         echo "🧪 Testing dev backend integration..."
         
-        # Extract API URL from deployed config-dev.js
-        API_URL="https://cdmwb9tdlj.execute-api.us-east-1.amazonaws.com/prod/contact"
+        # Try to get API URL from CloudFormation stack
+        API_URL=$(aws cloudformation describe-stacks \
+          --stack-name christopher-corbin-portfolio-backend-dev \
+          --region us-east-1 \
+          --query 'Stacks[0].Outputs[?OutputKey==`ContactFormApi`].OutputValue' \
+          --output text 2>/dev/null || echo "")
+        
+        if [ -z "$API_URL" ] || [ "$API_URL" = "None" ]; then
+          echo "⚠️  Dev backend stack not found or not deployed yet"
+          echo "💡 Deploy backend first: push changes to infrastructure/ or src/ directories"
+          echo "   Or manually trigger: Actions → Deploy SAM Backend - Development → Run workflow"
+          exit 0
+        fi
         
         echo "📡 Testing API endpoint: $API_URL"
         
         # Test API health
-        HTTP_STATUS=$(curl -s -w "%{http_code}" -X POST "$API_URL" \
+        response=$(curl -s -w "\n%{http_code}" -X POST "$API_URL" \
           -H "Content-Type: application/json" \
           -d '{
             "name": "GitHub Actions Dev Test",
             "email": "dev-test@github-actions.com",
             "message": "Automated dev frontend-backend integration test"
-          }' || echo "000")
+          }')
         
-        if [ "$HTTP_STATUS" = "200" ]; then
+        http_code=$(echo "$response" | tail -n1)
+        body=$(echo "$response" | head -n-1)
+        
+        if [ "$http_code" = "200" ]; then
           echo "✅ SUCCESS: Dev backend integration working!"
+          echo "Response: $body"
         else
-          echo "⚠️  WARNING: Dev backend test failed with HTTP $HTTP_STATUS"
-          echo "This might be expected if backend is not deployed yet"
+          echo "❌ Dev backend test failed - HTTP $http_code"
+          echo "Response: $body"
+          echo ""
+          echo "💡 Check backend deployment logs or CloudWatch for Lambda errors"
+          exit 1
         fi
         
     - name: Generate dev deployment report
@@ -154,7 +227,7 @@ jobs:
         echo "📦 S3 Bucket: $DEV_BUCKET" 
         echo "📡 Backend API: https://cdmwb9tdlj.execute-api.us-east-1.amazonaws.com/prod/contact"
         echo "🕐 Deploy Time: $(date)"
-        echo "🤖 Built by: GitHub Actions"
+        echo "🤖 Built by: GitHub Actions (OIDC)"
         echo "👤 Triggered by: ${{ github.actor }}"
         echo "🔗 Commit: ${{ github.sha }}"
         echo ""

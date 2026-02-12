@@ -18,8 +18,11 @@ document.querySelectorAll('.nav-link').forEach(n =>
 // Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   anchor.addEventListener('click', function (e) {
+    const href = this.getAttribute('href');
+    // Skip if href is just "#" (used for buttons/modals)
+    if (href === '#') return;
     e.preventDefault();
-    const target = document.querySelector(this.getAttribute('href'));
+    const target = document.querySelector(href);
     if (target) {
       target.scrollIntoView({
         behavior: 'smooth',
