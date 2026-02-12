@@ -91,7 +91,7 @@ jobs:
         
         # 1. Sync all files with no-cache for dev (HTML)
         eval aws s3 sync . s3://$DEV_BUCKET --delete $SYNC_COMMON \
-          --cache-control "no-cache, max-age=0"
+          --cache-control "no-cache,max-age=0"
 
         # 2. Override CSS with short cache
         aws s3 sync . s3://$DEV_BUCKET \
