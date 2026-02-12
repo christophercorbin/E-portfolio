@@ -79,25 +79,10 @@ jobs:
             --public-access-block-configuration \
               "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
           
-          # Add bucket policy for public read
-          cat > /tmp/dev-bucket-policy.json <<'POLICY'
-          {
-              "Version": "2012-10-17",
-              "Statement": [
-                  {
-                      "Sid": "PublicReadGetObject",
-                      "Effect": "Allow",
-                      "Principal": "*",
-                      "Action": "s3:GetObject",
-                      "Resource": "arn:aws:s3:::christopher-corbin-portfolio-dev-20251006/*"
-                  }
-              ]
-          }
-          POLICY
-          
+          # Add bucket policy for public read using inline JSON
           aws s3api put-bucket-policy \
             --bucket $DEV_BUCKET \
-            --policy file:///tmp/dev-bucket-policy.json
+            --policy "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"PublicReadGetObject\",\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"s3:GetObject\",\"Resource\":\"arn:aws:s3:::$DEV_BUCKET/*\"}]}"
           
           # Add tags
           aws s3api put-bucket-tagging \
