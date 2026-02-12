@@ -1,4 +1,5 @@
 # SAM configuration file for Christopher Corbin Portfolio - Development Environment
+# This configuration is used for deploying to the dev account (934862608865)
 
 version = 0.1
 
