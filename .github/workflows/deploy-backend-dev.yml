@@ -1,13 +1,14 @@
 name: Deploy SAM Backend - Development
 
 permissions:
+  id-token: write  # Required for OIDC
   contents: read
   issues: write
   pull-requests: write
 
 on:
   push:
-    branches: [ dev-backend-integration ]
+    branches: [ develop, dev-backend-integration ]
     paths:
       - 'infrastructure/template.yaml'
       - 'src/**'
@@ -61,12 +62,12 @@ jobs:
       with:
         use-installer: true
     
-    - name: Configure AWS credentials
+    - name: Configure AWS credentials via OIDC
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: arn:aws:iam::934862608865:role/GitHubActionsDeployRole
         aws-region: us-east-1
+        role-session-name: GitHubActions-DevBackend
     
     - name: Build SAM application
       working-directory: infrastructure
@@ -130,7 +131,7 @@ jobs:
         if [[ -n "$API_URL" && "$API_URL" != "None" ]]; then
           echo "✅ Contact API URL: $API_URL"
           echo "API_URL=$API_URL" >> $GITHUB_ENV
-          echo "🚀 Backend deployed to $ENVIRONMENT environment!"
+          echo "🚀 Backend deployed to $ENVIRONMENT environment via OIDC!"
         else
           echo "❌ Error: Could not retrieve API URL"
           exit 1
@@ -184,11 +185,12 @@ jobs:
       uses: actions/github-script@v7
       with:
         script: |
-          const comment = `## 🚀 Backend Deployment Complete
+          const comment = `## 🚀 Backend Deployment Complete (OIDC)
           
           **Environment**: \`${process.env.ENVIRONMENT}\`
           **API URL**: \`${process.env.API_URL}\`
           **Stack Name**: \`${process.env.STACK_NAME}\`
+          **Auth Method**: OIDC (No long-lived credentials)
           
           ### ✅ Tests Passed
           - API endpoint is responding correctly
