@@ -1,6 +1,6 @@
 # Christopher Corbin - AWS Solutions Architect & Security Engineer Portfolio
 
-[![Deploy Status](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy.yml) [![SAM Backend](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-prod.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-prod.yml)
+[![Dev Frontend](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-frontend-dev.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-frontend-dev.yml) [![Dev Backend](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-backend-dev.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-backend-dev.yml) [![Prod Frontend](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-frontend-prod.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-frontend-prod.yml) [![Prod Backend](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-backend-prod.yml/badge.svg)](https://github.com/christophercorbin/E-portfolio/actions/workflows/deploy-backend-prod.yml)
 
 Professional portfolio showcasing AWS expertise, security engineering, and DevOps automation. Built with enterprise-grade cloud architecture, custom domain, and fully automated CI/CD pipelines.
 
