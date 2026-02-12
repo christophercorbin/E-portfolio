@@ -46,7 +46,7 @@ jobs:
     - name: Ensure S3 bucket exists
       env:
         S3_BUCKET: christopher-corbin-portfolio-20251005195625
-        CLOUDFRONT_OAI: E3QBWYO0NRQX8V
+        CLOUDFRONT_DISTRIBUTION_ARN: arn:aws:cloudfront::438465156498:distribution/E34Q2E7TZIYZAB
       run: |
         echo "🔍 Checking if production bucket exists..."
         
@@ -60,30 +60,35 @@ jobs:
             --index-document index.html \
             --error-document index.html
           
-          echo "🔒 Setting bucket policy for CloudFront OAI access..."
-          aws s3api put-bucket-policy --bucket "$S3_BUCKET" --policy "{
-            \"Version\": \"2012-10-17\",
-            \"Statement\": [
-              {
-                \"Sid\": \"AllowCloudFrontOAI\",
-                \"Effect\": \"Allow\",
-                \"Principal\": {
-                  \"AWS\": \"arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity $CLOUDFRONT_OAI\"
-                },
-                \"Action\": \"s3:GetObject\",
-                \"Resource\": \"arn:aws:s3:::$S3_BUCKET/*\"
-              }
-            ]
-          }"
-          
           echo "🏷️  Adding tags..."
           aws s3api put-bucket-tagging --bucket "$S3_BUCKET" --tagging "TagSet=[{Key=Environment,Value=prod},{Key=Project,Value=christopher-corbin-portfolio},{Key=ManagedBy,Value=GitHubActions}]"
           
-          echo "✅ Production bucket created and configured successfully!"
-          echo "📝 Note: Bucket is configured for CloudFront access only (not public)"
+          echo "✅ Production bucket created successfully!"
         else
           echo "✅ Production bucket already exists"
         fi
+        
+        echo "🔒 Updating bucket policy for CloudFront OAC access..."
+        aws s3api put-bucket-policy --bucket "$S3_BUCKET" --policy "{
+          \"Version\": \"2012-10-17\",
+          \"Statement\": [
+            {
+              \"Sid\": \"AllowCloudFrontServicePrincipal\",
+              \"Effect\": \"Allow\",
+              \"Principal\": {
+                \"Service\": \"cloudfront.amazonaws.com\"
+              },
+              \"Action\": \"s3:GetObject\",
+              \"Resource\": \"arn:aws:s3:::$S3_BUCKET/*\",
+              \"Condition\": {
+                \"StringEquals\": {
+                  \"AWS:SourceArn\": \"$CLOUDFRONT_DISTRIBUTION_ARN\"
+                }
+              }
+            }
+          ]
+        }"
+        echo "✅ Bucket policy updated for CloudFront OAC"
         
     - name: Deploy to S3
       env:
