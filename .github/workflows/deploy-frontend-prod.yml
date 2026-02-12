@@ -43,6 +43,44 @@ jobs:
         test -f script.js || { echo "ERROR: script.js missing"; exit 1; }
         echo "SUCCESS: All required files present"
         
+    - name: Ensure S3 bucket exists
+      env:
+        S3_BUCKET: christopher-corbin-portfolio-20251005195625
+      run: |
+        echo "🔍 Checking if production bucket exists..."
+        
+        if aws s3 ls "s3://$S3_BUCKET" 2>&1 | grep -q 'NoSuchBucket'; then
+          echo "📦 Creating production S3 bucket: $S3_BUCKET"
+          
+          aws s3 mb "s3://$S3_BUCKET" --region us-east-1
+          
+          echo "🌐 Configuring bucket for website hosting..."
+          aws s3 website "s3://$S3_BUCKET" \
+            --index-document index.html \
+            --error-document index.html
+          
+          echo "🔓 Setting bucket policy for public read access..."
+          aws s3api put-bucket-policy --bucket "$S3_BUCKET" --policy "{
+            \"Version\": \"2012-10-17\",
+            \"Statement\": [
+              {
+                \"Sid\": \"PublicReadGetObject\",
+                \"Effect\": \"Allow\",
+                \"Principal\": \"*\",
+                \"Action\": \"s3:GetObject\",
+                \"Resource\": \"arn:aws:s3:::$S3_BUCKET/*\"
+              }
+            ]
+          }"
+          
+          echo "🏷️  Adding tags..."
+          aws s3api put-bucket-tagging --bucket "$S3_BUCKET" --tagging "TagSet=[{Key=Environment,Value=prod},{Key=Project,Value=christopher-corbin-portfolio},{Key=ManagedBy,Value=GitHubActions}]"
+          
+          echo "✅ Production bucket created and configured successfully!"
+        else
+          echo "✅ Production bucket already exists"
+        fi
+        
     - name: Deploy to S3
       env:
         S3_BUCKET: christopher-corbin-portfolio-20251005195625
