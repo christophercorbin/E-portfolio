@@ -171,6 +171,14 @@ jobs:
           exit 1
         fi
     
+    - name: Restore production account credentials
+      if: env.SKIP_INVALIDATION != 'true'
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::590716168923:role/GitHubActionsDeployRole
+        role-session-name: GitHubActions-ProdFrontend
+        aws-region: us-east-1
+    
     - name: Manual invalidation instructions
       if: env.SKIP_INVALIDATION == 'true'
       env:
