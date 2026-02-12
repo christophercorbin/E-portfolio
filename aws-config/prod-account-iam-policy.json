@@ -2,6 +2,27 @@
   "Version": "2012-10-17",
   "Statement": [
     {
+      "Sid": "AllowProdS3BucketManagement",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:GetBucketWebsite",
+        "s3:PutBucketWebsite",
+        "s3:GetBucketPolicy",
+        "s3:PutBucketPolicy",
+        "s3:PutBucketTagging",
+        "s3:GetBucketTagging",
+        "s3:GetBucketLocation",
+        "s3:GetBucketVersioning"
+      ],
+      "Resource": "arn:aws:s3:::christopher-corbin-portfolio-20251005195625",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "us-east-1"
+        }
+      }
+    },
+    {
       "Sid": "AllowProdS3BucketListAccess",
       "Effect": "Allow",
       "Action": "s3:ListBucket",
@@ -207,14 +228,14 @@
       }
     },
     {
-      "Sid": "AllowCrossAccountCloudFrontInvalidation",
+      "Sid": "AllowCloudFrontInvalidation",
       "Effect": "Allow",
       "Action": [
         "cloudfront:CreateInvalidation",
         "cloudfront:GetInvalidation",
         "cloudfront:ListInvalidations"
       ],
-      "Resource": "arn:aws:cloudfront::438465156498:distribution/E34Q2E7TZIYZAB"
+      "Resource": "arn:aws:cloudfront::590716168923:distribution/E34Q2E7TZIYZAB"
     },
     {
       "Sid": "AllowSTSGetCallerIdentity",
@@ -227,7 +248,6 @@
       "Effect": "Deny",
       "Action": [
         "s3:DeleteBucket",
-        "s3:PutBucketWebsite",
         "lambda:DeleteFunction",
         "dynamodb:DeleteTable",
         "cloudformation:DeleteStack"
