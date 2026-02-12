@@ -94,6 +94,12 @@ jobs:
           echo "✅ Dev bucket already exists"
         fi
         
+    - name: Update dev config with backend API URL
+      run: |
+        echo "🔧 Updating dev configuration with backend API URL..."
+        chmod +x infrastructure/update-dev-config.sh
+        ./infrastructure/update-dev-config.sh
+        
     - name: Prepare dev environment files
       run: |
         echo "🔧 Preparing development environment..."
@@ -170,28 +176,47 @@ jobs:
         fi
         
     - name: Test dev backend integration
+      continue-on-error: true
       run: |
         echo "🧪 Testing dev backend integration..."
         
-        # Extract API URL from deployed config-dev.js
-        API_URL="https://cdmwb9tdlj.execute-api.us-east-1.amazonaws.com/prod/contact"
+        # Try to get API URL from CloudFormation stack
+        API_URL=$(aws cloudformation describe-stacks \
+          --stack-name christopher-corbin-portfolio-backend-dev \
+          --region us-east-1 \
+          --query 'Stacks[0].Outputs[?OutputKey==`ContactFormApi`].OutputValue' \
+          --output text 2>/dev/null || echo "")
+        
+        if [ -z "$API_URL" ] || [ "$API_URL" = "None" ]; then
+          echo "⚠️  Dev backend stack not found or not deployed yet"
+          echo "💡 Deploy backend first: push changes to infrastructure/ or src/ directories"
+          echo "   Or manually trigger: Actions → Deploy SAM Backend - Development → Run workflow"
+          exit 0
+        fi
         
         echo "📡 Testing API endpoint: $API_URL"
         
         # Test API health
-        HTTP_STATUS=$(curl -s -w "%{http_code}" -X POST "$API_URL" \
+        response=$(curl -s -w "\n%{http_code}" -X POST "$API_URL" \
           -H "Content-Type: application/json" \
           -d '{
             "name": "GitHub Actions Dev Test",
             "email": "dev-test@github-actions.com",
             "message": "Automated dev frontend-backend integration test"
-          }' || echo "000")
+          }')
         
-        if [ "$HTTP_STATUS" = "200" ]; then
+        http_code=$(echo "$response" | tail -n1)
+        body=$(echo "$response" | head -n-1)
+        
+        if [ "$http_code" = "200" ]; then
           echo "✅ SUCCESS: Dev backend integration working!"
+          echo "Response: $body"
         else
-          echo "⚠️  WARNING: Dev backend test failed with HTTP $HTTP_STATUS"
-          echo "This might be expected if backend is not deployed yet"
+          echo "❌ Dev backend test failed - HTTP $http_code"
+          echo "Response: $body"
+          echo ""
+          echo "💡 Check backend deployment logs or CloudWatch for Lambda errors"
+          exit 1
         fi
         
     - name: Generate dev deployment report
