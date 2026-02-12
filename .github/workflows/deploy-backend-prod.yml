@@ -37,7 +37,7 @@ jobs:
         use-installer: true
     
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: arn:aws:iam::590716168923:role/GitHubActionsDeployRole
         role-session-name: GitHubActions-ProdBackend
