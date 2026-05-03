@@ -1,0 +1,240 @@
+name: Deploy — Production
+
+# Deploys frontend (S3 + CloudFront) and backend (SAM) to the prod AWS account
+# on every push to main. Backend deploy only runs when infra or src files change.
+# Integration tests run automatically after backend deploy.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false  # Never cancel an in-flight prod deploy
+
+env:
+  AWS_REGION: us-east-1
+  PROD_BUCKET: christopher-corbin-portfolio-20251005195625
+  CLOUDFRONT_DIST: E34Q2E7TZIYZAB
+  CLOUDFRONT_URL: https://d30iyriy15xq9k.cloudfront.net
+  CUSTOM_DOMAIN: https://christophercorbin.cloud
+  PROD_STACK: christopher-corbin-portfolio-backend
+
+jobs:
+  # ── Frontend: sync static files + invalidate CloudFront ──────────────────────
+  deploy-frontend:
+    name: Deploy Frontend → Prod (S3 + CloudFront)
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials — prod account (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::590716168923:role/GitHubActionsDeployRole
+          role-session-name: GitHubActions-ProdFrontend
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Validate required files
+        run: |
+          for f in index.html styles.css script.js; do
+            test -f "$f" || { echo "❌ $f missing"; exit 1; }
+          done
+          echo "✅ Required files present"
+
+      - name: Ensure prod S3 bucket exists and has correct policy
+        run: |
+          if aws s3 ls "s3://$PROD_BUCKET" 2>&1 | grep -q 'NoSuchBucket'; then
+            echo "📦 Creating prod bucket..."
+            aws s3 mb "s3://$PROD_BUCKET" --region "$AWS_REGION"
+            aws s3 website "s3://$PROD_BUCKET" \
+              --index-document index.html --error-document index.html
+          fi
+          aws s3api put-bucket-policy --bucket "$PROD_BUCKET" --policy "{
+            \"Version\": \"2012-10-17\",
+            \"Statement\": [{
+              \"Sid\": \"AllowCloudFrontOAC\",
+              \"Effect\": \"Allow\",
+              \"Principal\": {\"Service\": \"cloudfront.amazonaws.com\"},
+              \"Action\": \"s3:GetObject\",
+              \"Resource\": \"arn:aws:s3:::$PROD_BUCKET/*\",
+              \"Condition\": {\"StringEquals\": {
+                \"AWS:SourceArn\": \"arn:aws:cloudfront::438465156498:distribution/$CLOUDFRONT_DIST\"
+              }}
+            }]
+          }"
+          echo "✅ Bucket policy updated for CloudFront OAC"
+
+      - name: Sync static files to S3
+        run: |
+          EXCLUDE="--exclude '*.json' --exclude '*.sh' --exclude '*.md'
+                   --exclude '.git/*' --exclude '.github/*' --exclude 'node_modules/*'
+                   --exclude 'docs/*' --exclude 'aws-config/*' --exclude 'infrastructure/*'
+                   --exclude 'src/*' --exclude 'tests/*' --exclude '.editorconfig'
+                   --exclude '.eslintrc.json' --exclude '.prettierrc.json'
+                   --exclude 'package*.json' --exclude 'requirements*'"
+
+          # HTML — short cache (5 min)
+          eval aws s3 sync . "s3://$PROD_BUCKET" --delete $EXCLUDE \
+            --cache-control "max-age=300"
+
+          # CSS/JS — long cache (1 year, cache-busted by CloudFront invalidation)
+          aws s3 sync . "s3://$PROD_BUCKET" --exclude "*" --include "*.css" \
+            --cache-control "max-age=31536000"
+          aws s3 sync . "s3://$PROD_BUCKET" --exclude "*" --include "*.js" \
+            --cache-control "max-age=31536000"
+
+          # Images/assets — long cache
+          aws s3 sync . "s3://$PROD_BUCKET" --exclude "*" \
+            --include "*.jpg" --include "*.jpeg" --include "*.png" \
+            --include "*.gif" --include "*.svg" --include "*.webp" \
+            --include "*.ico" --include "*.pdf" \
+            --cache-control "max-age=31536000"
+
+          echo "✅ Files synced to prod S3"
+
+      - name: Assume CloudFront role in management account
+        id: assume-cf-role
+        env:
+          CLOUDFRONT_ROLE_ARN: ${{ secrets.CLOUDFRONT_ROLE_ARN }}
+          CLOUDFRONT_EXTERNAL_ID: ${{ secrets.CLOUDFRONT_EXTERNAL_ID }}
+        run: |
+          if [ -z "$CLOUDFRONT_ROLE_ARN" ]; then
+            echo "⚠️  CLOUDFRONT_ROLE_ARN not set — skipping invalidation"
+            echo "SKIP_INVALIDATION=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          CREDS=$(aws sts assume-role \
+            --role-arn "$CLOUDFRONT_ROLE_ARN" \
+            --role-session-name GitHubActions-CFInvalidation \
+            --external-id "$CLOUDFRONT_EXTERNAL_ID" \
+            --duration-seconds 900 \
+            --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+            --output text)
+          echo "AWS_ACCESS_KEY_ID=$(echo "$CREDS" | awk '{print $1}')"    >> "$GITHUB_ENV"
+          echo "AWS_SECRET_ACCESS_KEY=$(echo "$CREDS" | awk '{print $2}')" >> "$GITHUB_ENV"
+          echo "AWS_SESSION_TOKEN=$(echo "$CREDS" | awk '{print $3}')"     >> "$GITHUB_ENV"
+          echo "SKIP_INVALIDATION=false" >> "$GITHUB_ENV"
+          echo "✅ CloudFront role assumed"
+
+      - name: Invalidate CloudFront cache
+        if: env.SKIP_INVALIDATION != 'true'
+        run: |
+          ID=$(aws cloudfront create-invalidation \
+            --distribution-id "$CLOUDFRONT_DIST" \
+            --paths '/*' \
+            --query 'Invalidation.Id' --output text)
+          echo "✅ Invalidation created: $ID"
+          echo "🌐 Live at: $CUSTOM_DOMAIN (propagates in 1–3 min)"
+
+      - name: Restore prod credentials after CloudFront step
+        if: env.SKIP_INVALIDATION != 'true'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::590716168923:role/GitHubActionsDeployRole
+          role-session-name: GitHubActions-ProdFrontend
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Manual invalidation instructions (if cross-account not configured)
+        if: env.SKIP_INVALIDATION == 'true'
+        run: |
+          echo "📝 S3 sync complete. To invalidate CloudFront manually:"
+          echo "   aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST --paths '/*'"
+          echo "   (run in management account 438465156498)"
+          echo "   Docs: docs/CROSS-ACCOUNT-CLOUDFRONT-SETUP.md"
+
+      - name: Verify live site
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$CLOUDFRONT_URL" || echo "000")
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Production site is live: $CUSTOM_DOMAIN"
+          else
+            echo "⚠️  CloudFront returned HTTP $STATUS (may still be propagating)"
+          fi
+
+  # ── Backend: SAM deploy to prod account ──────────────────────────────────────
+  deploy-backend:
+    name: Deploy Backend → Prod SAM
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::590716168923:role/GitHubActionsDeployRole
+          role-session-name: GitHubActions-ProdBackend
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Validate secrets
+        run: |
+          [ -n "${{ secrets.CONTACT_EMAIL }}" ] \
+            || { echo "❌ CONTACT_EMAIL secret not set"; exit 1; }
+          echo "✅ Required secrets present"
+
+      - name: Resolve CORS origin
+        run: |
+          CORS="*"
+          [ -n "${{ secrets.CLOUDFRONT_DOMAIN }}" ] \
+            && CORS="https://${{ secrets.CLOUDFRONT_DOMAIN }}"
+          echo "CORS_ORIGIN=$CORS" >> "$GITHUB_ENV"
+
+      - name: SAM build
+        working-directory: infrastructure
+        run: sam build
+
+      - name: SAM deploy to prod
+        working-directory: infrastructure
+        run: |
+          sam deploy \
+            --resolve-s3 \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --stack-name "$PROD_STACK" \
+            --capabilities CAPABILITY_IAM \
+            --region "$AWS_REGION" \
+            --parameter-overrides \
+              "ContactEmail=${{ secrets.CONTACT_EMAIL }}" \
+              "CorsOrigin=$CORS_ORIGIN" \
+              "Environment=prod"
+
+      - name: Get prod API URL
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name "$PROD_STACK" \
+            --query 'Stacks[0].Outputs[?OutputKey==`ContactFormApi`].OutputValue' \
+            --output text)
+          echo "✅ Prod API: $API_URL"
+          echo "API_URL=$API_URL" >> "$GITHUB_ENV"
+
+      - name: Install test dependencies
+        run: pip install requests pytest
+
+      - name: Run integration tests against prod
+        run: |
+          export API_URL="$API_URL"
+          pytest tests/integration/test_deployed_api.py -v --tb=short
+
+      - name: Deployment summary
+        run: |
+          echo "## ✅ Production Backend Live" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Stack**: \`$PROD_STACK\`"    >> "$GITHUB_STEP_SUMMARY"
+          echo "- **API**: \`$API_URL\`"          >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Region**: $AWS_REGION"        >> "$GITHUB_STEP_SUMMARY"

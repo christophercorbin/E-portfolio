@@ -5,6 +5,7 @@ const navMenu = document.querySelector('.nav-menu');
 hamburger.addEventListener('click', () => {
   hamburger.classList.toggle('active');
   navMenu.classList.toggle('active');
+  hamburger.setAttribute('aria-expanded', hamburger.classList.contains('active'));
 });
 
 // Close mobile menu when clicking on a nav link
@@ -327,17 +328,23 @@ function animateStats() {
   const stats = document.querySelectorAll('.stat-number');
 
   stats.forEach(stat => {
-    const target = parseInt(stat.textContent);
+    const rawText = stat.textContent.trim();
+    const isPercent = rawText.includes('%');
+    const suffix = isPercent ? '%' : '+';
+    const target = parseFloat(rawText); // handles "2000+", "500+", "97.2%"
     let count = 0;
     const increment = target / 50;
 
     const updateCount = () => {
       if (count < target) {
         count += increment;
-        stat.textContent = Math.ceil(count) + '+';
+        const display = isPercent
+          ? Math.min(parseFloat(count.toFixed(1)), target)
+          : Math.min(Math.ceil(count), target);
+        stat.textContent = display + suffix;
         setTimeout(updateCount, 40);
       } else {
-        stat.textContent = target + '+';
+        stat.textContent = target + suffix;
       }
     };
 
@@ -392,16 +399,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 200);
     });
   });
-});
-
-// Add loading animation
-window.addEventListener('load', () => {
-  document.body.style.opacity = '0';
-  document.body.style.transition = 'opacity 0.5s ease';
-
-  setTimeout(() => {
-    document.body.style.opacity = '1';
-  }, 100);
 });
 
 // Performance optimization - Lazy load background images

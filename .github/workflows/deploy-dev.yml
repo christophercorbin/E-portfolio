@@ -1,0 +1,171 @@
+name: Deploy — Development
+
+# Deploys both frontend (S3) and backend (SAM) to the dev AWS account
+# whenever code is pushed to the develop branch.
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force full deploy regardless of changed files'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-1
+  DEV_BUCKET: christopher-corbin-portfolio-dev-20251006
+  DEV_URL: http://christopher-corbin-portfolio-dev-20251006.s3-website-us-east-1.amazonaws.com
+  DEV_STACK: christopher-corbin-portfolio-backend-dev
+
+jobs:
+  # ── Frontend: sync static files to dev S3 ────────────────────────────────────
+  deploy-frontend:
+    name: Deploy Frontend → Dev S3
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::934862608865:role/GitHubActionsDeployRole
+          role-session-name: GitHubActions-DevFrontend
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Ensure dev S3 bucket exists
+        run: |
+          if aws s3 ls "s3://$DEV_BUCKET" 2>&1 | grep -q 'NoSuchBucket'; then
+            echo "📦 Creating dev bucket..."
+            aws s3api create-bucket --bucket "$DEV_BUCKET" --region "$AWS_REGION"
+            aws s3api put-bucket-versioning --bucket "$DEV_BUCKET" \
+              --versioning-configuration Status=Enabled
+            aws s3 website "s3://$DEV_BUCKET/" \
+              --index-document index.html --error-document index.html
+            aws s3api put-public-access-block --bucket "$DEV_BUCKET" \
+              --public-access-block-configuration \
+              "BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false"
+            aws s3api put-bucket-policy --bucket "$DEV_BUCKET" --policy \
+              "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"s3:GetObject\",\"Resource\":\"arn:aws:s3:::$DEV_BUCKET/*\"}]}"
+            echo "✅ Dev bucket created"
+          else
+            echo "✅ Dev bucket already exists"
+          fi
+
+      - name: Swap config for dev environment
+        run: |
+          chmod +x infrastructure/update-dev-config.sh
+          ./infrastructure/update-dev-config.sh
+          sed -i 's|<script src="config.js"></script>|<script src="config-dev.js"></script>|g' index.html
+
+      - name: Validate required files
+        run: |
+          for f in index.html styles.css script.js config-dev.js; do
+            test -f "$f" || { echo "❌ $f missing"; exit 1; }
+          done
+          grep -q "config-dev.js" index.html || { echo "❌ Dev config not applied"; exit 1; }
+          echo "✅ All files present"
+
+      - name: Sync to dev S3
+        run: |
+          EXCLUDE="--exclude '*.json' --exclude '*.sh' --exclude '*.md' --exclude '*.toml'
+                   --exclude '.git/*' --exclude '.github/*' --exclude 'node_modules/*'
+                   --exclude 'src/*' --exclude 'docs/*' --exclude 'aws-config/*'
+                   --exclude 'infrastructure/*' --exclude 'tests/*' --exclude 'config.js'
+                   --exclude 'package*.json' --exclude 'requirements*'"
+
+          # HTML — no-cache so changes are always visible in dev
+          eval aws s3 sync . "s3://$DEV_BUCKET" --delete $EXCLUDE \
+            --cache-control "no-cache,max-age=0"
+
+          # CSS/JS — short cache
+          aws s3 sync . "s3://$DEV_BUCKET" --exclude "*" --include "*.css" \
+            --cache-control "max-age=300"
+          aws s3 sync . "s3://$DEV_BUCKET" --exclude "*" --include "*.js" --exclude "config.js" \
+            --cache-control "max-age=300"
+
+          # Images/assets — medium cache
+          aws s3 sync . "s3://$DEV_BUCKET" --exclude "*" \
+            --include "*.jpg" --include "*.jpeg" --include "*.png" \
+            --include "*.svg" --include "*.webp" --include "*.pdf" \
+            --cache-control "max-age=3600"
+
+          echo "✅ Frontend synced to dev"
+
+      - name: Verify deployment
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEV_URL" || echo "000")
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Dev site is live: $DEV_URL"
+          else
+            echo "❌ Site not accessible — HTTP $STATUS"
+            exit 1
+          fi
+
+  # ── Backend: SAM deploy to dev account ───────────────────────────────────────
+  deploy-backend:
+    name: Deploy Backend → Dev SAM
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::934862608865:role/GitHubActionsDeployRole
+          role-session-name: GitHubActions-DevBackend
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: SAM build
+        working-directory: infrastructure
+        run: sam build
+
+      - name: SAM deploy to dev
+        working-directory: infrastructure
+        run: |
+          sam deploy \
+            --config-file samconfig-dev.toml \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --capabilities CAPABILITY_IAM
+
+      - name: Get dev API URL
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name "$DEV_STACK" \
+            --query 'Stacks[0].Outputs[?OutputKey==`ContactFormApi`].OutputValue' \
+            --output text)
+          echo "✅ Dev API: $API_URL"
+          echo "API_URL=$API_URL" >> "$GITHUB_ENV"
+
+      - name: Smoke test dev API
+        continue-on-error: true
+        run: |
+          if [ -z "$API_URL" ]; then echo "⚠️  No API URL — skipping test"; exit 0; fi
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$API_URL" \
+            -H "Content-Type: application/json" \
+            -d '{"name":"Dev Smoke Test","email":"dev@github-actions.com","message":"Automated dev deploy verification"}')
+          [ "$STATUS" = "200" ] && echo "✅ API smoke test passed" \
+                                || echo "⚠️  API smoke test returned HTTP $STATUS"

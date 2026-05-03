@@ -29,19 +29,27 @@
       content="AWS-certified Cloud & Security Engineer specializing in secure architectures, DevOps automation, and SOC 2 compliance"
     />
     <meta name="twitter:image" content="https://christophercorbin.cloud/images/profile-photo.jpg" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ff9900'/%3E%3Ctext x='16' y='22' font-family='Arial,sans-serif' font-size='13' font-weight='bold' fill='white' text-anchor='middle'%3ECC%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="styles.css" />
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
       rel="stylesheet"
+      integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- Navigation -->
-    <nav class="navbar">
+    <nav class="navbar" aria-label="Main navigation">
       <div class="nav-container">
         <div class="nav-logo">
           <a href="#home">Christopher Corbin</a>
@@ -54,16 +62,16 @@
           <a href="#certifications" class="nav-link">Certifications</a>
           <a href="#contact" class="nav-link">Contact</a>
         </div>
-        <div class="hamburger">
+        <button class="hamburger" aria-label="Toggle navigation" aria-expanded="false">
           <span class="bar"></span>
           <span class="bar"></span>
           <span class="bar"></span>
-        </div>
+        </button>
       </div>
     </nav>
 
     <!-- Hero Section -->
-    <section id="home" class="hero">
+    <section id="main-content" class="hero" aria-label="Hero">
       <div class="hero-container">
         <div class="hero-content">
           <h1>Christopher Corbin</h1>
@@ -561,12 +569,14 @@
                 <a
                   href="https://github.com/christophercorbin/SOC2-ml-image-analyzer-dev/tree/soc2-hardened"
                   target="_blank"
+                  rel="noopener noreferrer"
                   class="project-link"
                   ><i class="fab fa-github"></i> View Code</a
                 >
                 <a
                   href="https://github.com/christophercorbin/SOC2-ml-image-analyzer-dev/tree/soc2-hardened#readme"
                   target="_blank"
+                  rel="noopener noreferrer"
                   class="project-link"
                   ><i class="fas fa-external-link-alt"></i> Documentation</a
                 >
@@ -599,12 +609,14 @@
                 <a
                   href="https://github.com/christophercorbin/-taskchecklist"
                   target="_blank"
+                  rel="noopener noreferrer"
                   class="project-link"
                   ><i class="fab fa-github"></i> View Code</a
                 >
                 <a
                   href="https://github.com/christophercorbin/-taskchecklist#readme"
                   target="_blank"
+                  rel="noopener noreferrer"
                   class="project-link"
                   ><i class="fas fa-external-link-alt"></i> Documentation</a
                 >
@@ -635,12 +647,14 @@
                 <a
                   href="https://github.com/christophercorbin/moodle-lms-on-aws"
                   target="_blank"
+                  rel="noopener noreferrer"
                   class="project-link"
                   ><i class="fab fa-github"></i> View Code</a
                 >
                 <a
                   href="https://github.com/christophercorbin/moodle-lms-on-aws#readme"
                   target="_blank"
+                  rel="noopener noreferrer"
                   class="project-link"
                   ><i class="fas fa-external-link-alt"></i> Architecture</a
                 >
@@ -854,7 +868,7 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="container">
-        <p>&copy; 2025 Christopher Corbin. Deployed via GitHub CI/CD → AWS S3 + CloudFront.</p>
+        <p>&copy; 2026 Christopher Corbin. Deployed via GitHub CI/CD → AWS S3 + CloudFront.</p>
         <div class="footer-links">
           <a href="https://github.com/christophercorbin" target="_blank"
             ><i class="fab fa-github"></i
